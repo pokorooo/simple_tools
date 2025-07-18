@@ -1,0 +1,12 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "buildCommand": "echo 'No build step needed'",
+  "outputDirectory": ".",
+  "rewrites": [
+    {
+      "source": "/json",
+      "destination": "/json.html"
+    }
+  ]
+}
