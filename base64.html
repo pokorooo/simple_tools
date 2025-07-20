@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base64変換ツール - Pokoro Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useCallback } = React;
+        
+        const Base64Converter = () => {
+            const [mode, setMode] = useState('encode'); // 'encode' or 'decode'
+            const [input, setInput] = useState('');
+            const [output, setOutput] = useState('');
+            const [error, setError] = useState('');
+            const [copyMessage, setCopyMessage] = useState('');
+
+            // Base64変換処理
+            const convertText = useCallback((text, mode) => {
+                setError('');
+                
+                if (!text.trim()) {
+                    setOutput('');
+                    return;
+                }
+
+                try {
+                    if (mode === 'encode') {
+                        // エンコード処理
+                        const encoded = btoa(unescape(encodeURIComponent(text)));
+                        setOutput(encoded);
+                    } else {
+                        // デコード処理
+                        const decoded = decodeURIComponent(escape(atob(text)));
+                        setOutput(decoded);
+                    }
+                } catch (err) {
+                    setError(mode === 'decode' ? 'Base64として無効な形式です' : '変換に失敗しました');
+                    setOutput('');
+                }
+            }, []);
+
+            // 入力変更時の処理
+            const handleInputChange = (e) => {
+                const value = e.target.value;
+                setInput(value);
+                convertText(value, mode);
+            };
+
+            // モード切り替え時の処理
+            const handleModeChange = (newMode) => {
+                setMode(newMode);
+                setError('');
+                if (input.trim()) {
+                    convertText(input, newMode);
+                }
+            };
+
+            // コピー処理
+            const handleCopy = async () => {
+                if (!output) return;
+                
+                try {
+                    await navigator.clipboard.writeText(output);
+                    setCopyMessage('コピーしました！');
+                    setTimeout(() => setCopyMessage(''), 2000);
+                } catch (err) {
+                    setCopyMessage('コピーに失敗しました');
+                    setTimeout(() => setCopyMessage(''), 2000);
+                }
+            };
+
+            return React.createElement('div', {
+                className: "min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100"
+            }, [
+                // ヘッダー
+                React.createElement('header', {
+                    key: 'header',
+                    className: "bg-white shadow-sm"
+                }, 
+                    React.createElement('div', {
+                        className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
+                    }, [
+                        React.createElement('div', {
+                            key: 'nav',
+                            className: "flex items-center justify-between mb-4"
+                        }, [
+                            React.createElement('a', {
+                                key: 'back',
+                                href: '/',
+                                className: "inline-flex items-center text-indigo-600 hover:text-indigo-700 transition-colors"
+                            }, [
+                                React.createElement('svg', {
+                                    key: 'arrow',
+                                    className: "w-5 h-5 mr-2",
+                                    fill: "none",
+                                    stroke: "currentColor",
+                                    viewBox: "0 0 24 24"
+                                },
+                                    React.createElement('path', {
+                                        strokeLinecap: "round",
+                                        strokeLinejoin: "round",
+                                        strokeWidth: 2,
+                                        d: "M15 19l-7-7 7-7"
+                                    })
+                                ),
+                                'ツール一覧に戻る'
+                            ])
+                        ]),
+                        React.createElement('h1', {
+                            key: 'title',
+                            className: "text-3xl font-bold text-gray-900 text-center"
+                        }, [
+                            React.createElement('span', {
+                                key: 'icon',
+                                className: "mr-3"
+                            }, '🔐'),
+                            'Base64変換ツール'
+                        ]),
+                        React.createElement('p', {
+                            key: 'subtitle',
+                            className: "text-center text-gray-600 mt-2"
+                        }, 'テキストをBase64エンコード・デコード')
+                    ])
+                ),
+
+                // メイン
+                React.createElement('main', {
+                    key: 'main',
+                    className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+                }, [
+                    // モード切替
+                    React.createElement('div', {
+                        key: 'mode-toggle',
+                        className: "bg-white rounded-lg shadow-sm p-6 mb-6"
+                    }, [
+                        React.createElement('div', {
+                            key: 'toggle-buttons',
+                            className: "flex justify-center mb-4"
+                        },
+                            React.createElement('div', {
+                                className: "bg-gray-100 rounded-lg p-1 flex"
+                            }, [
+                                React.createElement('button', {
+                                    key: 'encode-btn',
+                                    onClick: () => handleModeChange('encode'),
+                                    className: `px-6 py-2 rounded-md font-medium transition-all ${mode === 'encode' 
+                                        ? 'bg-indigo-600 text-white shadow-md' 
+                                        : 'text-gray-600 hover:text-gray-900'}`
+                                }, 'エンコード'),
+                                React.createElement('button', {
+                                    key: 'decode-btn',
+                                    onClick: () => handleModeChange('decode'),
+                                    className: `px-6 py-2 rounded-md font-medium transition-all ${mode === 'decode' 
+                                        ? 'bg-indigo-600 text-white shadow-md' 
+                                        : 'text-gray-600 hover:text-gray-900'}`
+                                }, 'デコード')
+                            ])
+                        )
+                    ]),
+
+                    // 変換エリア
+                    React.createElement('div', {
+                        key: 'converter',
+                        className: "bg-white rounded-lg shadow-sm p-6"
+                    }, [
+                        React.createElement('div', {
+                            key: 'converter-grid',
+                            className: "grid grid-cols-1 lg:grid-cols-2 gap-6"
+                        }, [
+                            // 入力エリア
+                            React.createElement('div', {
+                                key: 'input-area'
+                            }, [
+                                React.createElement('label', {
+                                    key: 'input-label',
+                                    className: "block text-sm font-medium text-gray-700 mb-2"
+                                }, '入力'),
+                                React.createElement('textarea', {
+                                    key: 'input-textarea',
+                                    value: input,
+                                    onChange: handleInputChange,
+                                    placeholder: mode === 'encode' 
+                                        ? 'エンコードするテキストを入力してください' 
+                                        : 'デコードするBase64文字列を入力してください',
+                                    className: "w-full h-64 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none font-mono text-sm",
+                                    spellCheck: false
+                                })
+                            ]),
+
+                            // 出力エリア
+                            React.createElement('div', {
+                                key: 'output-area'
+                            }, [
+                                React.createElement('label', {
+                                    key: 'output-label',
+                                    className: "block text-sm font-medium text-gray-700 mb-2"
+                                }, '変換結果'),
+                                React.createElement('div', {
+                                    key: 'output-container',
+                                    className: "relative"
+                                }, [
+                                    React.createElement('textarea', {
+                                        key: 'output-textarea',
+                                        value: output,
+                                        readOnly: true,
+                                        className: "w-full h-64 p-4 border border-gray-300 rounded-lg bg-gray-50 resize-none font-mono text-sm",
+                                        placeholder: "変換結果がここに表示されます"
+                                    }),
+                                    output && React.createElement('button', {
+                                        key: 'copy-btn',
+                                        onClick: handleCopy,
+                                        className: "absolute top-2 right-2 px-3 py-1 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700 transition-colors"
+                                    }, 'コピー')
+                                ]),
+                                
+                                // エラーメッセージ
+                                error && React.createElement('div', {
+                                    key: 'error',
+                                    className: "mt-2 text-red-600 text-sm"
+                                }, error),
+                                
+                                // コピーメッセージ
+                                copyMessage && React.createElement('div', {
+                                    key: 'copy-message',
+                                    className: "mt-2 text-green-600 text-sm"
+                                }, copyMessage)
+                            ])
+                        ])
+                    ])
+                ])
+            ]);
+        };
+
+        ReactDOM.render(React.createElement(Base64Converter), document.getElementById('root'));
+    </script>
+</body>
+</html>

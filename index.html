@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokoro Tools - 便利なWebツール集</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        const ToolsPage = () => {
+          const tools = [
+            {
+              id: 1,
+              name: '文字数カウント',
+              description: 'テキストの文字数・行数・単語数をリアルタイムでカウント',
+              link: './moji_count/',
+              icon: '📝'
+            },
+            {
+              id: 2,
+              name: 'URLエンコード',
+              description: 'URLエンコード・デコードを簡単に変換',
+              link: './url/',
+              icon: '🔗'
+            },
+            {
+              id: 3,
+              name: 'QRコード生成',
+              description: 'テキストやURLから高品質なQRコードを生成',
+              link: '/qr',
+              icon: '📱'
+            },
+            {
+              id: 4,
+              name: 'Base64変換',
+              description: 'テキストをBase64エンコード・デコード',
+              link: '/base64',
+              icon: '🔐'
+            },
+            {
+              id: 5,
+              name: 'JSONフォーマッター',
+              description: 'JSONデータを整形・圧縮・検証',
+              link: '/json',
+              icon: '📋'
+            },
+            {
+              id: 6,
+              name: 'カラーパレット',
+              description: 'カラーコードの変換と色見本の生成',
+              link: '/color',
+              icon: '🎨'
+            },
+            {
+              id: 7,
+              name: 'テキスト整形',
+              description: 'テキストの空白除去・重複削除・カンマ変換',
+              link: '/text-formatter',
+              icon: '✏️'
+            },
+            {
+              id: 8,
+              name: '改行コード＆タブ変換',
+              description: '改行コードとタブ/スペースの相互変換',
+              link: '/line-tab-converter',
+              icon: '🔄'
+            },
+            {
+              id: 9,
+              name: 'Markdown → HTML変換',
+              description: 'MarkdownをHTMLコードに変換',
+              link: '/markdown-to-html',
+              icon: '📝'
+            }
+          ];
+
+          return React.createElement('div', {
+            className: "min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100"
+          }, [
+            React.createElement('header', {
+              key: 'header',
+              className: "bg-white shadow-sm"
+            }, 
+              React.createElement('div', {
+                className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
+              }, [
+                React.createElement('h1', {
+                  key: 'title',
+                  className: "text-3xl font-bold text-gray-900 text-center"
+                }, [
+                  React.createElement('span', {
+                    key: 'brand',
+                    className: "text-indigo-600"
+                  }, 'Pokoro'),
+                  ' Tools'
+                ]),
+                React.createElement('p', {
+                  key: 'subtitle',
+                  className: "text-center text-gray-600 mt-2"
+                }, '便利なWebツール集')
+              ])
+            ),
+            React.createElement('main', {
+              key: 'main',
+              className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12"
+            },
+              React.createElement('div', {
+                className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+              }, 
+                tools.map((tool) => 
+                  React.createElement('div', {
+                    key: tool.id,
+                    className: "bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-2 overflow-hidden group"
+                  },
+                    React.createElement('div', {
+                      className: "p-6"
+                    }, [
+                      React.createElement('div', {
+                        key: 'header',
+                        className: "flex items-center mb-4"
+                      }, [
+                        React.createElement('span', {
+                          key: 'icon',
+                          className: "text-3xl mr-3"
+                        }, tool.icon),
+                        React.createElement('h2', {
+                          key: 'name',
+                          className: "text-xl font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors"
+                        }, tool.name)
+                      ]),
+                      React.createElement('p', {
+                        key: 'description',
+                        className: "text-gray-600 mb-6 leading-relaxed"
+                      }, tool.description),
+                      React.createElement('a', {
+                        key: 'link',
+                        href: tool.link,
+                        className: "inline-flex items-center px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors duration-200 group-hover:scale-105 transform"
+                      }, [
+                        '使ってみる',
+                        React.createElement('svg', {
+                          key: 'arrow',
+                          className: "ml-2 w-4 h-4",
+                          fill: "none",
+                          stroke: "currentColor",
+                          viewBox: "0 0 24 24"
+                        },
+                          React.createElement('path', {
+                            strokeLinecap: "round",
+                            strokeLinejoin: "round",
+                            strokeWidth: 2,
+                            d: "M9 5l7 7-7 7"
+                          })
+                        )
+                      ])
+                    ])
+                  )
+                )
+              )
+            ),
+            React.createElement('footer', {
+              key: 'footer',
+              className: "bg-white border-t border-gray-200 mt-16"
+            },
+              React.createElement('div', {
+                className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+              },
+                React.createElement('div', {
+                  className: "text-center"
+                }, [
+                  React.createElement('p', {
+                    key: 'copyright',
+                    className: "text-gray-500"
+                  }, '© Pokoro 2025. All rights reserved.'),
+                  React.createElement('p', {
+                    key: 'tagline',
+                    className: "text-gray-400 text-sm mt-2"
+                  }, 'Simple tools for everyday tasks')
+                ])
+              )
+            )
+          ]);
+        };
+
+        ReactDOM.render(React.createElement(ToolsPage), document.getElementById('root'));
+    </script>
+</body>
+</html>
