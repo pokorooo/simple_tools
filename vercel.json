@@ -7,6 +7,14 @@
     {
       "source": "/json",
       "destination": "/json.html"
+    },
+    {
+      "source": "/urlshortener",
+      "destination": "/urlshortener/index.html"
+    },
+    {
+      "source": "/urlshortener/(.*)",
+      "destination": "/urlshortener/index.html"
     }
   ]
 }
