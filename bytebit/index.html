@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>バイト⇄ビット換算ツール - Pokoro Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const UNITS = {
+            bit: 1/8,
+            byte: 1,
+            KB: 1_000,
+            KiB: 1_024,
+            MB: 1_000_000,
+            MiB: 1_048_576,
+            GB: 1_000_000_000,
+            GiB: 1_073_741_824,
+            TB: 1_000_000_000_000,
+            TiB: 1_099_511_627_776,
+        };
+
+        const ByteBitConverter = () => {
+            const [inputValue, setInputValue] = useState('1');
+            const [inputUnit, setInputUnit] = useState('MB');
+            const [toastVisible, setToastVisible] = useState(false);
+
+            const convertValue = (value, fromUnit, toUnit) => {
+                if (!value || isNaN(value) || value < 0) return '';
+                const bytes = parseFloat(value) * UNITS[fromUnit];
+                const result = bytes / UNITS[toUnit];
+                return result.toLocaleString('en-US', { 
+                    minimumFractionDigits: 0, 
+                    maximumFractionDigits: 6 
+                });
+            };
+
+            const copyToClipboard = async (value) => {
+                try {
+                    await navigator.clipboard.writeText(value);
+                    setToastVisible(true);
+                    setTimeout(() => setToastVisible(false), 1500);
+                } catch (err) {
+                    console.error('Failed to copy: ', err);
+                }
+            };
+
+            const allUnits = Object.keys(UNITS);
+
+            return (
+                <div className="min-h-screen p-4 bg-gray-50 dark:bg-gray-900">
+                    <div className="max-w-4xl mx-auto">
+                        <div className="text-center mb-8">
+                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                                バイト⇄ビット換算ツール
+                            </h1>
+                            <p className="text-gray-600 dark:text-gray-400">
+                                データサイズの単位を簡単に変換できます
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                                    入力
+                                </h2>
+                                
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            値
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={inputValue}
+                                            onChange={(e) => setInputValue(e.target.value)}
+                                            className="w-32 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                                            placeholder="数値を入力"
+                                        />
+                                    </div>
+                                    
+                                    <div className="flex items-center justify-between">
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            単位
+                                        </label>
+                                        <select
+                                            value={inputUnit}
+                                            onChange={(e) => setInputUnit(e.target.value)}
+                                            className="w-32 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                                        >
+                                            {allUnits.map(unit => (
+                                                <option key={unit} value={unit}>{unit}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                                    換算結果
+                                </h2>
+                                
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead>
+                                            <tr className="border-b border-gray-200 dark:border-gray-700">
+                                                <th className="text-left py-2 px-2 font-medium text-gray-700 dark:text-gray-300">単位</th>
+                                                <th className="text-right py-2 px-2 font-medium text-gray-700 dark:text-gray-300">値</th>
+                                                <th className="text-center py-2 px-2 font-medium text-gray-700 dark:text-gray-300">コピー</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {allUnits.map(unit => {
+                                                const convertedValue = convertValue(inputValue, inputUnit, unit);
+                                                return (
+                                                    <tr key={unit} className="border-b border-gray-100 dark:border-gray-700">
+                                                        <td className="py-2 px-2 text-gray-900 dark:text-white font-medium">
+                                                            {unit}
+                                                        </td>
+                                                        <td className="py-2 px-2 text-right text-gray-900 dark:text-white font-mono">
+                                                            {convertedValue}
+                                                        </td>
+                                                        <td className="py-2 px-2 text-center">
+                                                            {convertedValue && (
+                                                                <button
+                                                                    onClick={() => copyToClipboard(convertedValue)}
+                                                                    className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 p-1 rounded transition-colors"
+                                                                    title="コピー"
+                                                                >
+                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                                    </svg>
+                                                                </button>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-8 text-center">
+                            <a href="../" className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors">
+                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                </svg>
+                                ツール一覧に戻る
+                            </a>
+                        </div>
+                    </div>
+
+                    {toastVisible && (
+                        <div className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg transition-opacity">
+                            コピーしました
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        ReactDOM.render(React.createElement(ByteBitConverter), document.getElementById('root'));
+    </script>
+</body>
+</html>

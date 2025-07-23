@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pokoro Tools - 便利なWebツール集</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q3F3DJ865S"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-Q3F3DJ865S');
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -79,6 +88,27 @@
               description: 'MarkdownをHTMLコードに変換',
               link: '/markdown-to-html',
               icon: '📝'
+            },
+            {
+              id: 10,
+              name: 'URL短縮ツール',
+              description: 'TinyURL・is.gdを使って長いURLを短縮し、QRコードも生成',
+              link: '/urlshortener',
+              icon: '🔗'
+            },
+            {
+              id: 11,
+              name: 'テキスト差分ツール',
+              description: '2つのテキストの差分を比較し、追加・削除・変更行をハイライト表示',
+              link: './textdiff/',
+              icon: '📄'
+            },
+            {
+              id: 12,
+              name: 'バイト⇄ビット換算ツール',
+              description: 'データサイズの単位を簡単に変換（bit, byte, KB, KiB, MB, MiB, GB, GiB, TB, TiB）',
+              link: './bytebit/',
+              icon: '💾'
             }
           ];
 
