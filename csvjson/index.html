@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV ⇄ JSON 変換ツール - Pokoro Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useMemo, useEffect, useRef } = React;
+
+        const CsvJsonConverter = () => {
+            const [mode, setMode] = useState('csv-to-json');
+            const [csvInput, setCsvInput] = useState('name,age,city\nJohn,30,Tokyo\nJane,25,Osaka');
+            const [jsonInput, setJsonInput] = useState('');
+            const [csvOutput, setCsvOutput] = useState('');
+            const [jsonOutput, setJsonOutput] = useState('');
+            const [csvError, setCsvError] = useState('');
+            const [jsonError, setJsonError] = useState('');
+            const [delimiter, setDelimiter] = useState(',');
+            const [hasHeader, setHasHeader] = useState(true);
+            const [toastVisible, setToastVisible] = useState(false);
+            
+            const csvFileRef = useRef(null);
+            const jsonFileRef = useRef(null);
+
+            const showToast = () => {
+                setToastVisible(true);
+                setTimeout(() => setToastVisible(false), 1500);
+            };
+
+            const handleCsvToJson = () => {
+                if (!csvInput.trim()) {
+                    setJsonOutput('');
+                    setCsvError('');
+                    return;
+                }
+
+                try {
+                    const result = Papa.parse(csvInput, {
+                        header: hasHeader,
+                        delimiter: delimiter,
+                        skipEmptyLines: true,
+                        transformHeader: (header) => header.trim(),
+                        transform: (value) => value.trim()
+                    });
+
+                    if (result.errors.length > 0) {
+                        setCsvError(`CSV解析エラー: ${result.errors[0].message}`);
+                        setJsonOutput('');
+                        return;
+                    }
+
+                    setCsvError('');
+                    setJsonOutput(JSON.stringify(result.data, null, 2));
+                } catch (error) {
+                    setCsvError(`CSV解析エラー: ${error.message}`);
+                    setJsonOutput('');
+                }
+            };
+
+            const handleJsonToCsv = () => {
+                if (!jsonInput.trim()) {
+                    setCsvOutput('');
+                    setJsonError('');
+                    return;
+                }
+
+                try {
+                    const data = JSON.parse(jsonInput);
+                    
+                    if (!Array.isArray(data)) {
+                        setJsonError('JSONは配列である必要があります');
+                        setCsvOutput('');
+                        return;
+                    }
+
+                    if (data.length === 0) {
+                        setJsonError('空の配列です');
+                        setCsvOutput('');
+                        return;
+                    }
+
+                    const csv = Papa.unparse(data, {
+                        delimiter: delimiter,
+                        header: hasHeader
+                    });
+
+                    setJsonError('');
+                    setCsvOutput(csv);
+                } catch (error) {
+                    setJsonError(`JSON解析エラー: ${error.message}`);
+                    setCsvOutput('');
+                }
+            };
+
+            useEffect(() => {
+                if (mode === 'csv-to-json') {
+                    handleCsvToJson();
+                } else {
+                    handleJsonToCsv();
+                }
+            }, [csvInput, jsonInput, delimiter, hasHeader, mode]);
+
+            const handleFileUpload = (file, type) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (type === 'csv') {
+                        setCsvInput(e.target.result);
+                    } else {
+                        setJsonInput(e.target.result);
+                    }
+                };
+                reader.readAsText(file);
+            };
+
+            const copyToClipboard = async (text) => {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    showToast();
+                } catch (err) {
+                    console.error('コピーに失敗しました:', err);
+                }
+            };
+
+            const downloadFile = (content, filename, type) => {
+                const blob = new Blob([content], { type: `text/${type}` });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            };
+
+            return (
+                <div className="min-h-screen p-4 bg-gray-50 dark:bg-gray-900">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="text-center mb-8">
+                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                                CSV ⇄ JSON 変換ツール
+                            </h1>
+                            <p className="text-gray-600 dark:text-gray-400">
+                                CSVとJSONを相互変換できます
+                            </p>
+                        </div>
+
+                        {/* Mode Toggle */}
+                        <div className="flex justify-center mb-6">
+                            <div className="bg-white dark:bg-gray-800 rounded-lg p-1 shadow-md">
+                                <button
+                                    onClick={() => setMode('csv-to-json')}
+                                    className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                                        mode === 'csv-to-json'
+                                            ? 'bg-indigo-600 text-white'
+                                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                    }`}
+                                >
+                                    CSV → JSON
+                                </button>
+                                <button
+                                    onClick={() => setMode('json-to-csv')}
+                                    className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                                        mode === 'json-to-csv'
+                                            ? 'bg-indigo-600 text-white'
+                                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                    }`}
+                                >
+                                    JSON → CSV
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Settings */}
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-6">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">設定</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        区切り文字
+                                    </label>
+                                    <select
+                                        value={delimiter}
+                                        onChange={(e) => setDelimiter(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                                    >
+                                        <option value=",">カンマ (,)</option>
+                                        <option value="\t">タブ</option>
+                                        <option value=";">セミコロン (;)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="flex items-center space-x-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={hasHeader}
+                                            onChange={(e) => setHasHeader(e.target.checked)}
+                                            className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                        />
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            ヘッダー行あり
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Main Content */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* Input Side */}
+                            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                                        {mode === 'csv-to-json' ? 'CSV入力' : 'JSON入力'}
+                                    </h2>
+                                    <div className="flex space-x-2">
+                                        <input
+                                            type="file"
+                                            ref={mode === 'csv-to-json' ? csvFileRef : jsonFileRef}
+                                            accept={mode === 'csv-to-json' ? '.csv' : '.json'}
+                                            onChange={(e) => {
+                                                const file = e.target.files[0];
+                                                if (file) {
+                                                    handleFileUpload(file, mode === 'csv-to-json' ? 'csv' : 'json');
+                                                }
+                                            }}
+                                            className="hidden"
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                if (mode === 'csv-to-json') {
+                                                    csvFileRef.current?.click();
+                                                } else {
+                                                    jsonFileRef.current?.click();
+                                                }
+                                            }}
+                                            className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                                        >
+                                            ファイル選択
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <textarea
+                                    value={mode === 'csv-to-json' ? csvInput : jsonInput}
+                                    onChange={(e) => {
+                                        if (mode === 'csv-to-json') {
+                                            setCsvInput(e.target.value);
+                                        } else {
+                                            setJsonInput(e.target.value);
+                                        }
+                                    }}
+                                    placeholder={mode === 'csv-to-json' ? 'CSVデータを入力してください...' : 'JSONデータを入力してください...'}
+                                    className="w-full h-64 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white font-mono text-sm resize-none"
+                                />
+                                
+                                {(mode === 'csv-to-json' ? csvError : jsonError) && (
+                                    <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+                                        {mode === 'csv-to-json' ? csvError : jsonError}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Output Side */}
+                            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                                        {mode === 'csv-to-json' ? 'JSON結果' : 'CSV結果'}
+                                    </h2>
+                                    <div className="flex space-x-2">
+                                        <button
+                                            onClick={() => {
+                                                const output = mode === 'csv-to-json' ? jsonOutput : csvOutput;
+                                                if (output) copyToClipboard(output);
+                                            }}
+                                            disabled={!(mode === 'csv-to-json' ? jsonOutput : csvOutput)}
+                                            className="px-3 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            コピー
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                const output = mode === 'csv-to-json' ? jsonOutput : csvOutput;
+                                                const filename = mode === 'csv-to-json' ? 'data.json' : 'data.csv';
+                                                const type = mode === 'csv-to-json' ? 'json' : 'csv';
+                                                if (output) downloadFile(output, filename, type);
+                                            }}
+                                            disabled={!(mode === 'csv-to-json' ? jsonOutput : csvOutput)}
+                                            className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            ダウンロード
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <textarea
+                                    value={mode === 'csv-to-json' ? jsonOutput : csvOutput}
+                                    readOnly
+                                    placeholder="変換結果がここに表示されます..."
+                                    className="w-full h-64 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-50 dark:bg-gray-700 dark:text-white font-mono text-sm resize-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="mt-8 text-center">
+                            <a href="../" className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors">
+                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                </svg>
+                                ツール一覧に戻る
+                            </a>
+                        </div>
+                    </div>
+
+                    {toastVisible && (
+                        <div className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg transition-opacity">
+                            コピーしました
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        ReactDOM.render(React.createElement(CsvJsonConverter), document.getElementById('root'));
+    </script>
+</body>
+</html>
