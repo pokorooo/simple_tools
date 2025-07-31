@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ランダムパスワード生成ツール - Pokoro Tools</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q3F3DJ865S"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-Q3F3DJ865S');
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <script src="/related-tools-config.js"></script>
+    <script src="/RelatedTools.js"></script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        const PasswordGenerator = () => {
+            const [length, setLength] = useState(12);
+            const [options, setOptions] = useState({
+                lower: true,
+                upper: true,
+                number: true,
+                symbol: true
+            });
+            const [password, setPassword] = useState('');
+            const [history, setHistory] = useState([]);
+            const [toastVisible, setToastVisible] = useState(false);
+
+            useEffect(() => {
+                const savedHistory = localStorage.getItem('passwordHistory');
+                if (savedHistory) {
+                    setHistory(JSON.parse(savedHistory));
+                }
+            }, []);
+
+            useEffect(() => {
+                generatePassword();
+            }, [length, options]);
+
+            const characterPool = useMemo(() => {
+                const pools = [];
+                if (options.lower) pools.push('abcdefghijklmnopqrstuvwxyz');
+                if (options.upper) pools.push('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+                if (options.number) pools.push('0123456789');
+                if (options.symbol) pools.push('!@#$%&*?+-=[]{}|;:,.<>');
+                return pools.join('');
+            }, [options]);
+
+            const isValidOptions = useMemo(() => {
+                return Object.values(options).some(Boolean);
+            }, [options]);
+
+            const passwordStrength = useMemo(() => {
+                if (!password) return { level: 'Weak', score: 0 };
+                
+                const enabledTypes = Object.values(options).filter(Boolean).length;
+                const score = length * enabledTypes;
+                
+                if (score >= 60) return { level: 'Strong', score };
+                if (score >= 30) return { level: 'Medium', score };
+                return { level: 'Weak', score };
+            }, [password, length, options]);
+
+            const getStrengthColor = (level) => {
+                switch (level) {
+                    case 'Strong': return 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900';
+                    case 'Medium': return 'text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900';
+                    case 'Weak': return 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900';
+                    default: return 'text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-900';
+                }
+            };
+
+            const generatePassword = () => {
+                if (!isValidOptions || characterPool.length === 0) {
+                    setPassword('');
+                    return;
+                }
+
+                const array = new Uint8Array(length);
+                crypto.getRandomValues(array);
+                
+                let result = '';
+                for (let i = 0; i < length; i++) {
+                    result += characterPool[array[i] % characterPool.length];
+                }
+                
+                setPassword(result);
+            };
+
+            const addToHistory = (pwd) => {
+                if (!pwd) return;
+                
+                const historyItem = {
+                    password: pwd,
+                    timestamp: Date.now(),
+                    strength: passwordStrength.level
+                };
+                
+                const newHistory = [historyItem, ...history.filter(h => h.password !== pwd)].slice(0, 5);
+                setHistory(newHistory);
+                localStorage.setItem('passwordHistory', JSON.stringify(newHistory));
+            };
+
+            const copyToClipboard = async (text = password) => {
+                if (!text) return;
+                
+                try {
+                    await navigator.clipboard.writeText(text);
+                    setToastVisible(true);
+                    setTimeout(() => setToastVisible(false), 1500);
+                    
+                    if (text === password) {
+                        addToHistory(text);
+                    }
+                } catch (err) {
+                    console.error('コピーに失敗しました:', err);
+                }
+            };
+
+            const handleOptionChange = (option) => {
+                setOptions(prev => ({
+                    ...prev,
+                    [option]: !prev[option]
+                }));
+            };
+
+            const handleGenerate = () => {
+                generatePassword();
+            };
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+                    <div className="max-w-4xl mx-auto p-6">
+                        {React.createElement('div', {
+                            key: 'nav',
+                            className: "mb-4"
+                        }, 
+                            React.createElement('a', {
+                                key: 'back',
+                                href: '/',
+                                className: "inline-flex items-center text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                            }, [
+                                React.createElement('svg', {
+                                    key: 'arrow',
+                                    className: "w-5 h-5 mr-2",
+                                    fill: "none",
+                                    stroke: "currentColor",
+                                    viewBox: "0 0 24 24"
+                                },
+                                    React.createElement('path', {
+                                        strokeLinecap: "round",
+                                        strokeLinejoin: "round",
+                                        strokeWidth: 2,
+                                        d: "M15 19l-7-7 7-7"
+                                    })
+                                ),
+                                'ツール一覧に戻る'
+                            ])
+                        )}
+                        
+                        {/* Header */}
+                        <div className="text-center mb-12">
+                            <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 dark:bg-indigo-900 rounded-full mb-4">
+                                <span className="text-2xl">🔐</span>
+                            </div>
+                            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-3">
+                                ランダムパスワード生成ツール
+                            </h1>
+                            <RelatedTools currentTool="password" />
+                            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+                                暗号学的に安全な乱数を使用してパスワードを生成します。
+                            </p>
+                        </div>
+
+                        {/* Settings */}
+                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 mb-8">
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">設定</h2>
+                            
+                            {/* Length Slider */}
+                            <div className="mb-8">
+                                <div className="flex items-center justify-between mb-3">
+                                    <label className="text-lg font-semibold text-gray-900 dark:text-white">
+                                        パスワード長
+                                    </label>
+                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200">
+                                        {length} 文字
+                                    </span>
+                                </div>
+                                <input
+                                    type="range"
+                                    min="4"
+                                    max="64"
+                                    value={length}
+                                    onChange={(e) => setLength(parseInt(e.target.value))}
+                                    className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                                />
+                                <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                    <span>4</span>
+                                    <span>64</span>
+                                </div>
+                            </div>
+
+                            {/* Character Types */}
+                            <div className="mb-8">
+                                <label className="text-lg font-semibold text-gray-900 dark:text-white mb-4 block">
+                                    使用する文字種
+                                </label>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <label className="flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={options.lower}
+                                            onChange={() => handleOptionChange('lower')}
+                                            className="w-4 h-4 text-indigo-600 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 focus:ring-2"
+                                        />
+                                        <span className="ml-2 text-sm font-medium text-gray-900 dark:text-white">
+                                            小文字 (a-z)
+                                        </span>
+                                    </label>
+                                    <label className="flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={options.upper}
+                                            onChange={() => handleOptionChange('upper')}
+                                            className="w-4 h-4 text-indigo-600 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 focus:ring-2"
+                                        />
+                                        <span className="ml-2 text-sm font-medium text-gray-900 dark:text-white">
+                                            大文字 (A-Z)
+                                        </span>
+                                    </label>
+                                    <label className="flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={options.number}
+                                            onChange={() => handleOptionChange('number')}
+                                            className="w-4 h-4 text-indigo-600 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 focus:ring-2"
+                                        />
+                                        <span className="ml-2 text-sm font-medium text-gray-900 dark:text-white">
+                                            数字 (0-9)
+                                        </span>
+                                    </label>
+                                    <label className="flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={options.symbol}
+                                            onChange={() => handleOptionChange('symbol')}
+                                            className="w-4 h-4 text-indigo-600 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 focus:ring-2"
+                                        />
+                                        <span className="ml-2 text-sm font-medium text-gray-900 dark:text-white">
+                                            記号 (!@#$...)
+                                        </span>
+                                    </label>
+                                </div>
+                                
+                                {!isValidOptions && (
+                                    <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                                        <p className="text-sm text-red-600 dark:text-red-400 font-medium">
+                                            ⚠️ 少なくとも1つの文字種を選択してください
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Generate Button */}
+                            <button
+                                onClick={handleGenerate}
+                                disabled={!isValidOptions}
+                                className="w-full inline-flex items-center justify-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-600 text-white font-semibold rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
+                            >
+                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                新しいパスワードを生成
+                            </button>
+                        </div>
+
+                        {/* Generated Password */}
+                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 mb-8">
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">生成されたパスワード</h2>
+                                <div className="flex items-center space-x-3">
+                                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStrengthColor(passwordStrength.level)}`}>
+                                        {passwordStrength.level}
+                                    </span>
+                                    <button
+                                        onClick={() => copyToClipboard()}
+                                        disabled={!password}
+                                        className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white font-medium rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
+                                    >
+                                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                        コピー
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border min-h-16 flex items-center">
+                                {password ? (
+                                    <span className="font-mono text-lg text-gray-900 dark:text-white break-all select-all">
+                                        {password}
+                                    </span>
+                                ) : (
+                                    <span className="text-gray-400 dark:text-gray-500 italic">
+                                        {isValidOptions ? 'パスワードを生成してください' : '文字種を選択してください'}
+                                    </span>
+                                )}
+                            </div>
+                            
+                            {password && (
+                                <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                                    強度スコア: {passwordStrength.score} (長さ × 文字種数 = {length} × {Object.values(options).filter(Boolean).length})
+                                </div>
+                            )}
+                        </div>
+
+                        {/* History */}
+                        {history.length > 0 && (
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-8">
+                                <div className="flex items-center mb-6">
+                                    <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mr-3">
+                                        <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">履歴</h2>
+                                </div>
+                                <div className="space-y-3">
+                                    {history.map((item, index) => (
+                                        <div key={index} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-mono text-sm text-gray-900 dark:text-white truncate">
+                                                    {item.password}
+                                                </div>
+                                                <div className="flex items-center space-x-2 mt-1">
+                                                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStrengthColor(item.strength)}`}>
+                                                        {item.strength}
+                                                    </span>
+                                                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                        {new Date(item.timestamp).toLocaleString('ja-JP')}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => copyToClipboard(item.password)}
+                                                className="ml-3 inline-flex items-center px-3 py-1 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-600 text-white font-medium rounded text-sm transition-colors"
+                                            >
+                                                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                </svg>
+                                                コピー
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                    </div>
+
+                    {/* Toast Notification */}
+                    {toastVisible && (
+                        <div className="fixed bottom-6 right-6 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl shadow-lg transition-all duration-300 transform translate-y-0">
+                            <div className="flex items-center">
+                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                コピーしました
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        ReactDOM.render(React.createElement(PasswordGenerator), document.getElementById('root'));
+    </script>
+</body>
+</html>

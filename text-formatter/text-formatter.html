@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>テキスト整形ツール - Pokoro Tools</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q3F3DJ865S"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-Q3F3DJ865S');
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="/related-tools-config.js"></script>
+    <script src="/RelatedTools.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState } = React;
+        
+        const TextFormatter = () => {
+            const [inputText, setInputText] = useState('');
+            const [outputText, setOutputText] = useState('');
+            const [options, setOptions] = useState({
+                trim: false,
+                lineToComma: false,
+                removeDuplicates: false
+            });
+            const [copyMessage, setCopyMessage] = useState('');
+
+            // オプション変更処理
+            const handleOptionChange = (optionName) => {
+                setOptions(prev => ({
+                    ...prev,
+                    [optionName]: !prev[optionName]
+                }));
+            };
+
+            // テキスト整形処理
+            const formatText = () => {
+                if (!inputText.trim()) {
+                    setOutputText('');
+                    return;
+                }
+
+                let lines = inputText.split('\n');
+
+                // 前後の空白を除去
+                if (options.trim) {
+                    lines = lines.map(line => line.trim());
+                }
+
+                // 重複行を削除
+                if (options.removeDuplicates) {
+                    lines = [...new Set(lines)];
+                }
+
+                // 改行をカンマに変換
+                if (options.lineToComma) {
+                    // 空行を除去してからカンマ区切りにする
+                    const nonEmptyLines = lines.filter(line => line !== '');
+                    setOutputText(nonEmptyLines.join(', '));
+                } else {
+                    setOutputText(lines.join('\n'));
+                }
+            };
+
+            // コピー処理
+            const handleCopy = async () => {
+                if (!outputText) return;
+                
+                try {
+                    await navigator.clipboard.writeText(outputText);
+                    setCopyMessage('コピーしました！');
+                    setTimeout(() => setCopyMessage(''), 2000);
+                } catch (err) {
+                    setCopyMessage('コピーに失敗しました');
+                    setTimeout(() => setCopyMessage(''), 2000);
+                }
+            };
+
+            // クリア処理
+            const handleClear = () => {
+                setInputText('');
+                setOutputText('');
+            };
+
+            return React.createElement('div', {
+                className: "min-h-screen bg-gradient-to-br from-green-50 to-blue-100"
+            }, [
+                // ヘッダー
+                React.createElement('header', {
+                    key: 'header',
+                    className: "bg-white shadow-sm"
+                }, 
+                    React.createElement('div', {
+                        className: "max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
+                    }, [
+                        React.createElement('div', {
+                            key: 'nav',
+                            className: "mb-4"
+                        }, 
+                            React.createElement('a', {
+                                key: 'back',
+                                href: '/',
+                                className: "inline-flex items-center text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                            }, [
+                                React.createElement('svg', {
+                                    key: 'arrow',
+                                    className: "w-5 h-5 mr-2",
+                                    fill: "none",
+                                    stroke: "currentColor",
+                                    viewBox: "0 0 24 24"
+                                },
+                                    React.createElement('path', {
+                                        strokeLinecap: "round",
+                                        strokeLinejoin: "round",
+                                        strokeWidth: 2,
+                                        d: "M15 19l-7-7 7-7"
+                                    })
+                                ),
+                                'ツール一覧に戻る'
+                            ])
+                        ),
+                        React.createElement('h1', {
+                            key: 'title',
+                            className: "text-3xl font-bold text-gray-900 text-center"
+                        }, [
+                            React.createElement('span', {
+                                key: 'icon',
+                                className: "mr-3"
+                            }, '📝'),
+                            'テキスト整形ツール'
+                        ]),
+                        React.createElement('p', {
+                            key: 'subtitle',
+                            className: "text-center text-gray-600 mt-2"
+                        }, 'テキストを様々な形式に整形・変換')
+                    ])
+                ),
+
+                // メイン
+                React.createElement('main', {
+                    key: 'main',
+                    className: "max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+                }, [
+                    // 入力セクション
+                    React.createElement('div', {
+                        key: 'input-section',
+                        className: "bg-white rounded-lg shadow-sm p-6 mb-6"
+                    }, [
+                        React.createElement('div', {
+                            key: 'input-header',
+                            className: "flex items-center justify-between mb-4"
+                        }, [
+                            React.createElement('h2', {
+                                key: 'input-title',
+                                className: "text-xl font-semibold text-gray-700"
+                            }, '入力'),
+                            React.createElement('button', {
+                                key: 'clear-btn',
+                                onClick: handleClear,
+                                className: "px-3 py-1 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded hover:border-gray-400 transition-colors"
+                            }, 'クリア')
+                        ]),
+                        React.createElement('textarea', {
+                            key: 'input-textarea',
+                            value: inputText,
+                            onChange: (e) => setInputText(e.target.value),
+                            placeholder: "ここにテキストを入力してください",
+                            className: "w-full h-40 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none",
+                            spellCheck: false
+                        })
+                    ]),
+
+                    // オプションセクション
+                    React.createElement('div', {
+                        key: 'options-section',
+                        className: "bg-white rounded-lg shadow-sm p-6 mb-6"
+                    }, [
+                        React.createElement('h2', {
+                            key: 'options-title',
+                            className: "text-xl font-semibold text-gray-700 mb-4"
+                        }, '整形オプション'),
+                        React.createElement('div', {
+                            key: 'options-grid',
+                            className: "grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6"
+                        }, [
+                            // 前後の空白を除去
+                            React.createElement('label', {
+                                key: 'trim-option',
+                                className: "flex items-center space-x-2 cursor-pointer"
+                            }, [
+                                React.createElement('input', {
+                                    key: 'trim-checkbox',
+                                    type: "checkbox",
+                                    checked: options.trim,
+                                    onChange: () => handleOptionChange('trim'),
+                                    className: "w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                }),
+                                React.createElement('span', {
+                                    key: 'trim-label',
+                                    className: "text-sm text-gray-700"
+                                }, '前後の空白を除去')
+                            ]),
+
+                            // 改行をカンマに変換
+                            React.createElement('label', {
+                                key: 'comma-option',
+                                className: "flex items-center space-x-2 cursor-pointer"
+                            }, [
+                                React.createElement('input', {
+                                    key: 'comma-checkbox',
+                                    type: "checkbox",
+                                    checked: options.lineToComma,
+                                    onChange: () => handleOptionChange('lineToComma'),
+                                    className: "w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                }),
+                                React.createElement('span', {
+                                    key: 'comma-label',
+                                    className: "text-sm text-gray-700"
+                                }, '改行をカンマに変換')
+                            ]),
+
+                            // 重複行を削除
+                            React.createElement('label', {
+                                key: 'duplicate-option',
+                                className: "flex items-center space-x-2 cursor-pointer"
+                            }, [
+                                React.createElement('input', {
+                                    key: 'duplicate-checkbox',
+                                    type: "checkbox",
+                                    checked: options.removeDuplicates,
+                                    onChange: () => handleOptionChange('removeDuplicates'),
+                                    className: "w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                }),
+                                React.createElement('span', {
+                                    key: 'duplicate-label',
+                                    className: "text-sm text-gray-700"
+                                }, '重複行を削除')
+                            ])
+                        ]),
+
+                        // 整形ボタン
+                        React.createElement('div', {
+                            key: 'format-button-container',
+                            className: "text-center"
+                        },
+                            React.createElement('button', {
+                                key: 'format-button',
+                                onClick: formatText,
+                                className: "px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors duration-200"
+                            }, '整形する')
+                        )
+                    ]),
+
+                    // 出力セクション
+                    React.createElement('div', {
+                        key: 'output-section',
+                        className: "bg-white rounded-lg shadow-sm p-6"
+                    }, [
+                        React.createElement('div', {
+                            key: 'output-header',
+                            className: "flex items-center justify-between mb-4"
+                        }, [
+                            React.createElement('h2', {
+                                key: 'output-title',
+                                className: "text-xl font-semibold text-gray-700"
+                            }, '整形結果'),
+                            outputText && React.createElement('button', {
+                                key: 'copy-button',
+                                onClick: handleCopy,
+                                className: "px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors duration-200"
+                            }, 'コピー')
+                        ]),
+                        React.createElement('textarea', {
+                            key: 'output-textarea',
+                            value: outputText,
+                            readOnly: true,
+                            placeholder: "整形されたテキストがここに表示されます",
+                            className: "w-full h-40 p-4 border border-gray-300 rounded-lg bg-gray-50 resize-none",
+                            spellCheck: false
+                        }),
+
+                        // コピーメッセージ
+                        copyMessage && React.createElement('div', {
+                            key: 'copy-message',
+                            className: "mt-4 text-center text-green-600 text-sm font-medium"
+                        }, copyMessage)
+                    ])
+                ]),
+
+                // 関連ツール
+                React.createElement(RelatedTools, { key: 'related-tools', currentSlug: 'text-formatter' })
+            ]);
+        };
+
+        ReactDOM.render(React.createElement(TextFormatter), document.getElementById('root'));
+    </script>
+</body>
+</html>

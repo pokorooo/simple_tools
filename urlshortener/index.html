@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL短縮ツール</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q3F3DJ865S"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-Q3F3DJ865S');
+    </script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/related-tools-config.js"></script>
+    <script src="/RelatedTools.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const UrlShortener = () => {
+            const [url, setUrl] = useState('');
+            const [shortUrl, setShortUrl] = useState('');
+            const [selectedService, setSelectedService] = useState('tinyurl');
+            const [isLoading, setIsLoading] = useState(false);
+            const [error, setError] = useState('');
+            const [copyMessage, setCopyMessage] = useState('');
+            const [history, setHistory] = useState([]);
+
+            useEffect(() => {
+                const savedHistory = localStorage.getItem('urlShortenerHistory');
+                if (savedHistory) {
+                    setHistory(JSON.parse(savedHistory));
+                }
+            }, []);
+
+            const isValidUrl = (value) => {
+                try {
+                    new URL(value);
+                    return true;
+                } catch {
+                    return false;
+                }
+            };
+
+            const shortenUrl = async () => {
+                if (!url.trim()) {
+                    setError('URLを入力してください');
+                    return;
+                }
+
+                if (!isValidUrl(url)) {
+                    setError('有効なURLを入力してください');
+                    return;
+                }
+
+                setIsLoading(true);
+                setError('');
+                setShortUrl('');
+
+                try {
+                    const encodedUrl = encodeURIComponent(url);
+                    let apiUrl = '';
+
+                    if (selectedService === 'tinyurl') {
+                        apiUrl = `https://tinyurl.com/api-create.php?url=${encodedUrl}`;
+                    } else if (selectedService === 'isgd') {
+                        apiUrl = `https://is.gd/create.php?format=simple&url=${encodedUrl}`;
+                    }
+
+                    const response = await fetch(apiUrl);
+                    
+                    if (!response.ok) {
+                        throw new Error('短縮URLの生成に失敗しました');
+                    }
+
+                    const result = await response.text();
+                    
+                    if (result.includes('Error') || result.includes('error')) {
+                        throw new Error('短縮URLの生成に失敗しました');
+                    }
+
+                    setShortUrl(result.trim());
+
+                    const historyItem = {
+                        originalUrl: url,
+                        shortUrl: result.trim(),
+                        service: selectedService,
+                        timestamp: Date.now()
+                    };
+
+                    const newHistory = [historyItem, ...history.slice(0, 4)];
+                    setHistory(newHistory);
+                    localStorage.setItem('urlShortenerHistory', JSON.stringify(newHistory));
+
+                } catch (err) {
+                    setError(err instanceof Error ? err.message : '短縮URLの生成に失敗しました');
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            const copyToClipboard = async (textToCopy) => {
+                try {
+                    await navigator.clipboard.writeText(textToCopy);
+                    setCopyMessage('コピーしました');
+                    setTimeout(() => setCopyMessage(''), 2000);
+                } catch (err) {
+                    setError('コピーに失敗しました');
+                }
+            };
+
+            const handleHistoryClick = (item) => {
+                copyToClipboard(item.shortUrl);
+            };
+
+            return React.createElement('div', {
+                className: "min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8"
+            }, 
+                React.createElement('div', {
+                    className: "max-w-2xl mx-auto"
+                },
+                    React.createElement('div', {
+                        key: 'nav',
+                        className: "mb-4"
+                    }, 
+                        React.createElement('a', {
+                            key: 'back',
+                            href: '/',
+                            className: "inline-flex items-center text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                        }, [
+                            React.createElement('svg', {
+                                key: 'arrow',
+                                className: "w-5 h-5 mr-2",
+                                fill: "none",
+                                stroke: "currentColor",
+                                viewBox: "0 0 24 24"
+                            },
+                                React.createElement('path', {
+                                    strokeLinecap: "round",
+                                    strokeLinejoin: "round",
+                                    strokeWidth: 2,
+                                    d: "M15 19l-7-7 7-7"
+                                })
+                            ),
+                            'ツール一覧に戻る'
+                        ])
+                    ),
+                    React.createElement('div', {
+                        className: "bg-white rounded-lg shadow-md p-6"
+                    },
+                        React.createElement('h1', {
+                            className: "text-3xl font-bold text-gray-900 text-center mb-8"
+                        }, 'URL短縮ツール'),
+
+                        React.createElement('div', {
+                            className: "space-y-6"
+                        },
+                            React.createElement('div', {},
+                                React.createElement('label', {
+                                    htmlFor: "service",
+                                    className: "block text-sm font-medium text-gray-700 mb-2"
+                                }, '短縮サービス'),
+                                React.createElement('select', {
+                                    id: "service",
+                                    value: selectedService,
+                                    onChange: (e) => setSelectedService(e.target.value),
+                                    className: "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                },
+                                    React.createElement('option', { value: "tinyurl" }, 'TinyURL'),
+                                    React.createElement('option', { value: "isgd" }, 'is.gd')
+                                )
+                            ),
+
+                            React.createElement('div', {},
+                                React.createElement('label', {
+                                    htmlFor: "url",
+                                    className: "block text-sm font-medium text-gray-700 mb-2"
+                                }, 'URL'),
+                                React.createElement('input', {
+                                    id: "url",
+                                    type: "url",
+                                    value: url,
+                                    onChange: (e) => setUrl(e.target.value),
+                                    placeholder: "ここにURLを入力してください",
+                                    className: "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                })
+                            ),
+
+                            React.createElement('button', {
+                                onClick: shortenUrl,
+                                disabled: isLoading,
+                                className: "w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            }, isLoading ? '生成中...' : '短縮する'),
+
+                            error && React.createElement('div', {
+                                className: "text-red-600 text-sm text-center"
+                            }, error),
+
+                            copyMessage && React.createElement('div', {
+                                className: "bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded text-center"
+                            }, copyMessage),
+
+                            shortUrl && React.createElement('div', {
+                                className: "bg-gray-50 rounded-lg p-4 space-y-4"
+                            },
+                                React.createElement('div', {},
+                                    React.createElement('label', {
+                                        className: "block text-sm font-medium text-gray-700 mb-2"
+                                    }, '短縮URL'),
+                                    React.createElement('div', {
+                                        className: "flex gap-2"
+                                    },
+                                        React.createElement('input', {
+                                            type: "text",
+                                            value: shortUrl,
+                                            readOnly: true,
+                                            className: "flex-1 px-3 py-2 border border-gray-300 rounded-md bg-white"
+                                        }),
+                                        React.createElement('button', {
+                                            onClick: () => copyToClipboard(shortUrl),
+                                            className: "bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                                        }, 'コピー')
+                                    )
+                                ),
+
+                                React.createElement('div', {
+                                    className: "flex justify-center"
+                                },
+                                    React.createElement('div', {
+                                        className: "bg-white p-4 rounded-lg border"
+                                    },
+                                        React.createElement('canvas', {
+                                            ref: (canvas) => {
+                                                if (canvas && window.QRCode) {
+                                                    QRCode.toCanvas(canvas, shortUrl, { width: 128 }, (error) => {
+                                                        if (error) console.error(error);
+                                                    });
+                                                }
+                                            }
+                                        })
+                                    )
+                                )
+                            ),
+
+                            history.length > 0 && React.createElement('div', {},
+                                React.createElement('h2', {
+                                    className: "text-lg font-semibold text-gray-900 mb-3"
+                                }, '履歴（最新5件）'),
+                                React.createElement('div', {
+                                    className: "space-y-2"
+                                },
+                                    history.map((item, index) =>
+                                        React.createElement('div', {
+                                            key: index,
+                                            onClick: () => handleHistoryClick(item),
+                                            className: "bg-gray-50 p-3 rounded-md cursor-pointer hover:bg-gray-100 transition-colors"
+                                        },
+                                            React.createElement('div', {
+                                                className: "text-sm text-gray-600 mb-1"
+                                            }, `${item.service === 'tinyurl' ? 'TinyURL' : 'is.gd'} - ${new Date(item.timestamp).toLocaleString()}`),
+                                            React.createElement('div', {
+                                                className: "text-sm text-gray-800 truncate"
+                                            }, item.originalUrl),
+                                            React.createElement('div', {
+                                                className: "text-sm text-blue-600 font-medium"
+                                            }, item.shortUrl)
+                                        )
+                                    )
+                                )
+                            ),
+                        React.createElement(RelatedTools, { currentTool: 'urlshortener' })
+                        )
+                    )
+                )
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(UrlShortener));
+    </script>
+</body>
+</html>

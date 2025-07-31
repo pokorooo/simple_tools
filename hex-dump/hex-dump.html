@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hex Dump Viewer（バイナリ→16進ダンプ表示） - Pokoro Tools</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q3F3DJ865S"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-Q3F3DJ865S');
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <script src="/related-tools-config.js"></script>
+    <script src="/RelatedTools.js"></script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
+        
+        const HexDumpViewer = () => {
+            const [file, setFile] = useState(null);
+            const [arrayBuffer, setArrayBuffer] = useState(null);
+            const [bytesPerLine, setBytesPerLine] = useState(16);
+            const [offsetFormat, setOffsetFormat] = useState('hex'); // 'hex' or 'dec'
+            const [isDragOver, setIsDragOver] = useState(false);
+            const [error, setError] = useState('');
+            const [copyMessage, setCopyMessage] = useState('');
+            const [history, setHistory] = useState([]);
+            const fileInputRef = useRef(null);
+
+            const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+            // 履歴をローカルストレージから読み込み
+            useEffect(() => {
+                const savedHistory = localStorage.getItem('hexDumpHistory');
+                if (savedHistory) {
+                    try {
+                        setHistory(JSON.parse(savedHistory));
+                    } catch (e) {
+                        setHistory([]);
+                    }
+                }
+            }, []);
+
+            // ファイル処理
+            const handleFile = (selectedFile) => {
+                setError('');
+                
+                if (!selectedFile) return;
+
+                if (selectedFile.size > MAX_FILE_SIZE) {
+                    setError(`ファイルサイズが大きすぎます（最大 ${MAX_FILE_SIZE / 1024 / 1024}MB）`);
+                    return;
+                }
+
+                setFile(selectedFile);
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        setArrayBuffer(e.target.result);
+                        addToHistory(selectedFile);
+                    } catch (err) {
+                        setError('ファイルの読み込みに失敗しました');
+                    }
+                };
+                reader.onerror = () => {
+                    setError('ファイルの読み込みに失敗しました');
+                };
+                reader.readAsArrayBuffer(selectedFile);
+            };
+
+            // 履歴に追加
+            const addToHistory = (newFile) => {
+                const historyItem = {
+                    name: newFile.name,
+                    size: newFile.size,
+                    timestamp: Date.now()
+                };
+
+                const newHistory = [
+                    historyItem,
+                    ...history.filter(item => item.name !== newFile.name)
+                ].slice(0, 3);
+
+                setHistory(newHistory);
+                localStorage.setItem('hexDumpHistory', JSON.stringify(newHistory));
+            };
+
+            // ドラッグ＆ドロップ処理
+            const handleDragOver = (e) => {
+                e.preventDefault();
+                setIsDragOver(true);
+            };
+
+            const handleDragLeave = (e) => {
+                e.preventDefault();
+                setIsDragOver(false);
+            };
+
+            const handleDrop = (e) => {
+                e.preventDefault();
+                setIsDragOver(false);
+                
+                const droppedFile = e.dataTransfer.files[0];
+                handleFile(droppedFile);
+            };
+
+            const handleFileSelect = (e) => {
+                const selectedFile = e.target.files[0];
+                handleFile(selectedFile);
+            };
+
+            // ASCII文字変換
+            const toAscii = (byte) => {
+                return (byte >= 32 && byte <= 126) ? String.fromCharCode(byte) : '.';
+            };
+
+            // オフセット変換
+            const formatOffset = (offset, format) => {
+                if (format === 'hex') {
+                    return offset.toString(16).toUpperCase().padStart(8, '0');
+                } else {
+                    return offset.toString().padStart(8, '0');
+                }
+            };
+
+            // ヘックスダンプ生成
+            const hexDump = useMemo(() => {
+                if (!arrayBuffer) return '';
+
+                const uint8Array = new Uint8Array(arrayBuffer);
+                const lines = [];
+
+                for (let i = 0; i < uint8Array.length; i += bytesPerLine) {
+                    const lineBytes = uint8Array.slice(i, i + bytesPerLine);
+                    
+                    // オフセット
+                    const offset = formatOffset(i, offsetFormat);
+                    
+                    // HEX部分
+                    const hexPart = Array.from(lineBytes, byte => 
+                        byte.toString(16).toUpperCase().padStart(2, '0')
+                    );
+                    
+                    // 不足分を空白で埋める
+                    while (hexPart.length < bytesPerLine) {
+                        hexPart.push('  ');
+                    }
+
+                    // 8バイト目の後に追加スペース
+                    let hexString = '';
+                    for (let j = 0; j < hexPart.length; j++) {
+                        if (j === 8 && bytesPerLine >= 16) {
+                            hexString += ' ';
+                        }
+                        hexString += hexPart[j];
+                        if (j < hexPart.length - 1) {
+                            hexString += ' ';
+                        }
+                    }
+
+                    // ASCII部分
+                    const asciiPart = Array.from(lineBytes, toAscii).join('');
+                    
+                    lines.push(`${offset}  ${hexString}  |${asciiPart}|`);
+                }
+
+                return lines.join('\n');
+            }, [arrayBuffer, bytesPerLine, offsetFormat]);
+
+            // コピー処理
+            const handleCopy = async () => {
+                if (!hexDump) return;
+                
+                try {
+                    await navigator.clipboard.writeText(hexDump);
+                    setCopyMessage('ダンプをコピーしました');
+                    setTimeout(() => setCopyMessage(''), 1500);
+                } catch (err) {
+                    setCopyMessage('コピーに失敗しました');
+                    setTimeout(() => setCopyMessage(''), 1500);
+                }
+            };
+
+            // ダウンロード処理
+            const handleDownload = () => {
+                if (!hexDump) return;
+
+                const blob = new Blob([hexDump], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'dump.txt';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            };
+
+            // ファイル選択ボタンクリック
+            const handleFileButtonClick = () => {
+                fileInputRef.current?.click();
+            };
+
+            return React.createElement('div', {
+                className: "min-h-screen bg-gradient-to-br from-gray-50 to-blue-100 dark:from-gray-900 dark:to-gray-800"
+            }, [
+                // ヘッダー
+                React.createElement('header', {
+                    key: 'header',
+                    className: "bg-white dark:bg-gray-800 shadow-sm"
+                }, 
+                    React.createElement('div', {
+                        className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
+                    }, [
+                        React.createElement('div', {
+                            key: 'nav',
+                            className: "mb-4"
+                        }, 
+                            React.createElement('a', {
+                                key: 'back',
+                                href: '/',
+                                className: "inline-flex items-center text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                            }, [
+                                React.createElement('svg', {
+                                    key: 'arrow',
+                                    className: "w-5 h-5 mr-2",
+                                    fill: "none",
+                                    stroke: "currentColor",
+                                    viewBox: "0 0 24 24"
+                                },
+                                    React.createElement('path', {
+                                        strokeLinecap: "round",
+                                        strokeLinejoin: "round",
+                                        strokeWidth: 2,
+                                        d: "M15 19l-7-7 7-7"
+                                    })
+                                ),
+                                'ツール一覧に戻る'
+                            ])
+                        ),
+                        React.createElement('h1', {
+                            key: 'title',
+                            className: "text-3xl font-bold text-gray-900 dark:text-white text-center"
+                        }, [
+                            React.createElement('span', {
+                                key: 'icon',
+                                className: "mr-3"
+                            }, '🔍'),
+                            'Hex Dump Viewer'
+                        ]),
+                        React.createElement('p', {
+                            key: 'subtitle',
+                            className: "text-center text-gray-600 dark:text-gray-300 mt-2"
+                        }, 'バイナリファイルを16進ダンプ表示')
+                    ])
+                ),
+
+                // メイン
+                React.createElement('main', {
+                    key: 'main',
+                    className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+                }, [
+                    // メインエリア
+                    React.createElement('div', {
+                        key: 'main-area',
+                        className: "grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8"
+                    }, [
+                        // 入力エリア
+                        React.createElement('div', {
+                            key: 'input-area',
+                            className: "bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
+                        }, [
+                            React.createElement('h2', {
+                                key: 'input-title',
+                                className: "text-xl font-semibold text-gray-800 dark:text-white mb-6"
+                            }, 'ファイル入力'),
+
+                            // ドラッグ＆ドロップ領域
+                            React.createElement('div', {
+                                key: 'drop-zone',
+                                onDragOver: handleDragOver,
+                                onDragLeave: handleDragLeave,
+                                onDrop: handleDrop,
+                                className: `border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                                    isDragOver 
+                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' 
+                                        : 'border-gray-300 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500'
+                                }`
+                            }, [
+                                React.createElement('svg', {
+                                    key: 'upload-icon',
+                                    className: "mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4",
+                                    stroke: "currentColor",
+                                    fill: "none",
+                                    viewBox: "0 0 48 48"
+                                },
+                                    React.createElement('path', {
+                                        d: "M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02",
+                                        strokeWidth: 2,
+                                        strokeLinecap: "round",
+                                        strokeLinejoin: "round"
+                                    })
+                                ),
+                                React.createElement('p', {
+                                    key: 'drop-text',
+                                    className: "text-gray-600 dark:text-gray-300 mb-2"
+                                }, 'ファイルをドラッグ＆ドロップ'),
+                                React.createElement('p', {
+                                    key: 'or-text',
+                                    className: "text-gray-500 dark:text-gray-400 text-sm mb-4"
+                                }, 'または'),
+                                React.createElement('button', {
+                                    key: 'file-button',
+                                    onClick: handleFileButtonClick,
+                                    className: "px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 transition-colors"
+                                }, 'ファイルを選択'),
+                                React.createElement('input', {
+                                    key: 'file-input',
+                                    ref: fileInputRef,
+                                    type: 'file',
+                                    onChange: handleFileSelect,
+                                    className: 'hidden'
+                                })
+                            ]),
+
+                            // エラー表示
+                            error && React.createElement('div', {
+                                key: 'error',
+                                className: "mt-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 rounded-lg text-sm"
+                            }, error),
+
+                            // ファイル情報
+                            file && React.createElement('div', {
+                                key: 'file-info',
+                                className: "mt-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg"
+                            }, [
+                                React.createElement('h3', {
+                                    key: 'info-title',
+                                    className: "font-medium text-gray-800 dark:text-white mb-2"
+                                }, 'ファイル情報'),
+                                React.createElement('p', {
+                                    key: 'file-name',
+                                    className: "text-sm text-gray-600 dark:text-gray-300"
+                                }, `ファイル名: ${file.name}`),
+                                React.createElement('p', {
+                                    key: 'file-size',
+                                    className: "text-sm text-gray-600 dark:text-gray-300"
+                                }, `サイズ: ${(file.size / 1024).toFixed(2)} KB`)
+                            ]),
+
+                            // オプション
+                            arrayBuffer && React.createElement('div', {
+                                key: 'options',
+                                className: "mt-6 space-y-4"
+                            }, [
+                                React.createElement('div', {
+                                    key: 'bytes-per-line'
+                                }, [
+                                    React.createElement('label', {
+                                        key: 'bytes-label',
+                                        className: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                                    }, '1行あたりのバイト数'),
+                                    React.createElement('select', {
+                                        key: 'bytes-select',
+                                        value: bytesPerLine,
+                                        onChange: (e) => setBytesPerLine(parseInt(e.target.value)),
+                                        className: "w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    }, [
+                                        React.createElement('option', { key: 8, value: 8 }, '8 バイト'),
+                                        React.createElement('option', { key: 16, value: 16 }, '16 バイト'),
+                                        React.createElement('option', { key: 32, value: 32 }, '32 バイト')
+                                    ])
+                                ]),
+                                React.createElement('div', {
+                                    key: 'offset-format'
+                                }, [
+                                    React.createElement('label', {
+                                        key: 'offset-label',
+                                        className: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                                    }, 'オフセット表示'),
+                                    React.createElement('select', {
+                                        key: 'offset-select',
+                                        value: offsetFormat,
+                                        onChange: (e) => setOffsetFormat(e.target.value),
+                                        className: "w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    }, [
+                                        React.createElement('option', { key: 'hex', value: 'hex' }, '16進数'),
+                                        React.createElement('option', { key: 'dec', value: 'dec' }, '10進数')
+                                    ])
+                                ])
+                            ])
+                        ]),
+
+                        // ダンプ表示エリア
+                        React.createElement('div', {
+                            key: 'dump-area',
+                            className: "bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
+                        }, [
+                            React.createElement('div', {
+                                key: 'dump-header',
+                                className: "flex items-center justify-between mb-4"
+                            }, [
+                                React.createElement('h2', {
+                                    key: 'dump-title',
+                                    className: "text-xl font-semibold text-gray-800 dark:text-white"
+                                }, 'ヘックスダンプ'),
+                                hexDump && React.createElement('div', {
+                                    key: 'action-buttons',
+                                    className: "flex gap-2"
+                                }, [
+                                    React.createElement('button', {
+                                        key: 'copy-btn',
+                                        onClick: handleCopy,
+                                        className: "px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 transition-colors"
+                                    }, 'コピー'),
+                                    React.createElement('button', {
+                                        key: 'download-btn',
+                                        onClick: handleDownload,
+                                        className: "px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors"
+                                    }, 'ダウンロード')
+                                ])
+                            ]),
+                            React.createElement('div', {
+                                key: 'dump-container',
+                                className: "border border-gray-300 dark:border-gray-600 rounded-lg overflow-auto"
+                            },
+                                React.createElement('pre', {
+                                    key: 'dump-content',
+                                    className: "p-4 font-mono text-sm text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-900 whitespace-pre overflow-auto max-h-96"
+                                }, hexDump || 'ファイルを選択するとヘックスダンプが表示されます')
+                            )
+                        ])
+                    ]),
+
+                    // 履歴セクション
+                    history.length > 0 && React.createElement('div', {
+                        key: 'history-section',
+                        className: "bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6"
+                    }, [
+                        React.createElement('h2', {
+                            key: 'history-title',
+                            className: "text-xl font-semibold text-gray-800 dark:text-white mb-4"
+                        }, '履歴（最新3件）'),
+                        React.createElement('div', {
+                            key: 'history-grid',
+                            className: "grid grid-cols-1 sm:grid-cols-3 gap-4"
+                        },
+                            history.map((item, index) =>
+                                React.createElement('div', {
+                                    key: index,
+                                    className: "p-4 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                }, [
+                                    React.createElement('div', {
+                                        key: 'hist-name',
+                                        className: "font-medium text-gray-900 dark:text-white mb-1 truncate"
+                                    }, item.name),
+                                    React.createElement('div', {
+                                        key: 'hist-size',
+                                        className: "text-sm text-gray-600 dark:text-gray-400 mb-2"
+                                    }, `${(item.size / 1024).toFixed(2)} KB`),
+                                    React.createElement('div', {
+                                        key: 'hist-time',
+                                        className: "text-xs text-gray-500 dark:text-gray-400"
+                                    }, new Date(item.timestamp).toLocaleString())
+                                ])
+                            )
+                        )
+                    ]),
+
+                    // 関連ツール
+                    React.createElement(RelatedTools, { key: 'related-tools', currentSlug: 'hex-dump' })
+                ]),
+
+                // トーストメッセージ
+                copyMessage && React.createElement('div', {
+                    key: 'toast',
+                    className: "fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50"
+                }, copyMessage)
+            ]);
+        };
+
+        ReactDOM.render(React.createElement(HexDumpViewer), document.getElementById('root'));
+    </script>
+</body>
+</html>

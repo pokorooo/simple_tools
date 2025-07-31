@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV 行の重複削除＋件数表示ツール - Pokoro Tools</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q3F3DJ865S"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-Q3F3DJ865S');
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <script src="/related-tools-config.js"></script>
+    <script src="/RelatedTools.js"></script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useRef } = React;
+        
+        const CSVDeduplicator = () => {
+            const [inputText, setInputText] = useState('');
+            const [outputText, setOutputText] = useState('');
+            const [hasHeader, setHasHeader] = useState(true);
+            const [ignoreCase, setIgnoreCase] = useState(false);
+            const [trimWhitespace, setTrimWhitespace] = useState(true);
+            const [statistics, setStatistics] = useState({ totalRows: 0, uniqueRows: 0, duplicatesRemoved: 0 });
+            const [error, setError] = useState('');
+            const [copyMessage, setCopyMessage] = useState('');
+            const fileInputRef = useRef(null);
+
+            // CSVデータの正規化
+            const normalizeRow = (row) => {
+                if (!Array.isArray(row)) return row;
+                
+                return row.map(cell => {
+                    let normalized = String(cell || '');
+                    if (trimWhitespace) {
+                        normalized = normalized.trim();
+                    }
+                    if (ignoreCase) {
+                        normalized = normalized.toLowerCase();
+                    }
+                    return normalized;
+                });
+            };
+
+            // 行の重複チェック用のキー生成
+            const getRowKey = (row) => {
+                return normalizeRow(row).join('\u0001'); // 制御文字で区切り
+            };
+
+            // CSV重複削除処理
+            const processCsvData = (csvText) => {
+                setError('');
+                
+                if (!csvText.trim()) {
+                    setError('入力が空です');
+                    setOutputText('');
+                    setStatistics({ totalRows: 0, uniqueRows: 0, duplicatesRemoved: 0 });
+                    return;
+                }
+
+                try {
+                    // CSVパース
+                    const parseResult = Papa.parse(csvText, { 
+                        skipEmptyLines: true,
+                        delimiter: ','
+                    });
+
+                    if (parseResult.errors && parseResult.errors.length > 0) {
+                        setError('CSV の解析に失敗しました: ' + parseResult.errors[0].message);
+                        return;
+                    }
+
+                    const rows = parseResult.data;
+                    if (rows.length === 0) {
+                        setError('有効なデータがありません');
+                        return;
+                    }
+
+                    let headerRow = null;
+                    let dataRows = rows;
+                    
+                    // ヘッダー処理
+                    if (hasHeader && rows.length > 0) {
+                        headerRow = rows[0];
+                        dataRows = rows.slice(1);
+                    }
+
+                    // 重複削除
+                    const seen = new Set();
+                    const uniqueRows = [];
+                    
+                    dataRows.forEach(row => {
+                        const key = getRowKey(row);
+                        if (!seen.has(key)) {
+                            seen.add(key);
+                            uniqueRows.push(row);
+                        }
+                    });
+
+                    // 結果生成
+                    const resultRows = headerRow ? [headerRow, ...uniqueRows] : uniqueRows;
+                    const resultCsv = Papa.unparse(resultRows);
+
+                    // 統計計算
+                    const totalDataRows = dataRows.length;
+                    const uniqueDataRows = uniqueRows.length;
+                    const duplicatesRemoved = totalDataRows - uniqueDataRows;
+
+                    setOutputText(resultCsv);
+                    setStatistics({
+                        totalRows: hasHeader ? totalDataRows : rows.length,
+                        uniqueRows: uniqueDataRows,
+                        duplicatesRemoved: duplicatesRemoved
+                    });
+
+                } catch (err) {
+                    setError('処理中にエラーが発生しました: ' + err.message);
+                    setOutputText('');
+                    setStatistics({ totalRows: 0, uniqueRows: 0, duplicatesRemoved: 0 });
+                }
+            };
+
+            // 入力テキスト変更時の処理
+            const handleInputChange = (e) => {
+                const value = e.target.value;
+                setInputText(value);
+                processCsvData(value);
+            };
+
+            // ファイルアップロード処理
+            const handleFileUpload = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                if (file.type !== 'text/csv' && !file.name.toLowerCase().endsWith('.csv')) {
+                    setError('CSV ファイルを選択してください');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const text = event.target.result;
+                    setInputText(text);
+                    processCsvData(text);
+                };
+                reader.onerror = () => {
+                    setError('ファイルの読み込みに失敗しました');
+                };
+                reader.readAsText(file, 'UTF-8');
+            };
+
+            // オプション変更時の再処理
+            const handleOptionChange = (setter, value) => {
+                setter(value);
+                // 次のレンダリング後に再処理するため、setTimeoutを使用
+                setTimeout(() => {
+                    if (inputText.trim()) {
+                        processCsvData(inputText);
+                    }
+                }, 0);
+            };
+
+            // コピー処理
+            const handleCopy = async () => {
+                if (!outputText) return;
+                
+                try {
+                    await navigator.clipboard.writeText(outputText);
+                    setCopyMessage('CSVをコピーしました');
+                    setTimeout(() => setCopyMessage(''), 1500);
+                } catch (err) {
+                    setCopyMessage('コピーに失敗しました');
+                    setTimeout(() => setCopyMessage(''), 1500);
+                }
+            };
+
+            // ダウンロード処理
+            const handleDownload = () => {
+                if (!outputText) return;
+
+                const blob = new Blob([outputText], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'deduped.csv';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            };
+
+            // クリア処理
+            const handleClear = () => {
+                setInputText('');
+                setOutputText('');
+                setError('');
+                setStatistics({ totalRows: 0, uniqueRows: 0, duplicatesRemoved: 0 });
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                }
+            };
+
+            // ファイル選択ボタンクリック
+            const handleFileButtonClick = () => {
+                fileInputRef.current?.click();
+            };
+
+            return React.createElement('div', {
+                className: "min-h-screen bg-gradient-to-br from-green-50 to-blue-100 dark:from-gray-900 dark:to-gray-800"
+            }, [
+                // ヘッダー
+                React.createElement('header', {
+                    key: 'header',
+                    className: "bg-white dark:bg-gray-800 shadow-sm"
+                }, 
+                    React.createElement('div', {
+                        className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
+                    }, [
+                        React.createElement('div', {
+                            key: 'nav',
+                            className: "mb-4"
+                        }, 
+                            React.createElement('a', {
+                                key: 'back',
+                                href: '/',
+                                className: "inline-flex items-center text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                            }, [
+                                React.createElement('svg', {
+                                    key: 'arrow',
+                                    className: "w-5 h-5 mr-2",
+                                    fill: "none",
+                                    stroke: "currentColor",
+                                    viewBox: "0 0 24 24"
+                                },
+                                    React.createElement('path', {
+                                        strokeLinecap: "round",
+                                        strokeLinejoin: "round",
+                                        strokeWidth: 2,
+                                        d: "M15 19l-7-7 7-7"
+                                    })
+                                ),
+                                'ツール一覧に戻る'
+                            ])
+                        ),
+                        React.createElement('h1', {
+                            key: 'title',
+                            className: "text-3xl font-bold text-gray-900 dark:text-white text-center"
+                        }, [
+                            React.createElement('span', {
+                                key: 'icon',
+                                className: "mr-3"
+                            }, '🔄'),
+                            'CSV 行の重複削除ツール'
+                        ]),
+                        React.createElement('p', {
+                            key: 'subtitle',
+                            className: "text-center text-gray-600 dark:text-gray-300 mt-2"
+                        }, 'CSV データから重複行を削除し、統計情報を表示')
+                    ])
+                ),
+
+                // メイン
+                React.createElement('main', {
+                    key: 'main',
+                    className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+                }, [
+                    // メインエリア
+                    React.createElement('div', {
+                        key: 'main-area',
+                        className: "grid grid-cols-1 lg:grid-cols-2 gap-8"
+                    }, [
+                        // 入力エリア
+                        React.createElement('div', {
+                            key: 'input-area',
+                            className: "bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
+                        }, [
+                            React.createElement('h2', {
+                                key: 'input-title',
+                                className: "text-xl font-semibold text-gray-800 dark:text-white mb-6"
+                            }, '入力'),
+
+                            // ファイルアップロード
+                            React.createElement('div', {
+                                key: 'file-upload',
+                                className: "mb-6"
+                            }, [
+                                React.createElement('label', {
+                                    key: 'file-label',
+                                    className: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                                }, 'CSV ファイル'),
+                                React.createElement('div', {
+                                    key: 'file-container',
+                                    className: "flex gap-2"
+                                }, [
+                                    React.createElement('button', {
+                                        key: 'file-button',
+                                        onClick: handleFileButtonClick,
+                                        className: "px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 transition-colors"
+                                    }, 'ファイルを選択'),
+                                    React.createElement('input', {
+                                        key: 'file-input',
+                                        ref: fileInputRef,
+                                        type: 'file',
+                                        accept: '.csv',
+                                        onChange: handleFileUpload,
+                                        className: 'hidden'
+                                    })
+                                ])
+                            ]),
+
+                            // テキストエリア
+                            React.createElement('div', {
+                                key: 'textarea-container',
+                                className: "mb-6"
+                            }, [
+                                React.createElement('label', {
+                                    key: 'textarea-label',
+                                    className: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                                }, 'または CSV テキストを貼り付け'),
+                                React.createElement('textarea', {
+                                    key: 'textarea',
+                                    value: inputText,
+                                    onChange: handleInputChange,
+                                    placeholder: "CSV データを貼り付けるか、上のボタンでファイルを選択してください",
+                                    className: "w-full h-64 p-4 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none font-mono text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white",
+                                    spellCheck: false
+                                })
+                            ]),
+
+                            // オプション
+                            React.createElement('div', {
+                                key: 'options',
+                                className: "mb-6"
+                            }, [
+                                React.createElement('h3', {
+                                    key: 'options-title',
+                                    className: "text-lg font-medium text-gray-800 dark:text-white mb-4"
+                                }, 'オプション'),
+                                React.createElement('div', {
+                                    key: 'options-grid',
+                                    className: "space-y-3"
+                                }, [
+                                    React.createElement('label', {
+                                        key: 'header-option',
+                                        className: "flex items-center space-x-2 cursor-pointer"
+                                    }, [
+                                        React.createElement('input', {
+                                            key: 'header-checkbox',
+                                            type: "checkbox",
+                                            checked: hasHeader,
+                                            onChange: (e) => handleOptionChange(setHasHeader, e.target.checked),
+                                            className: "w-4 h-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500"
+                                        }),
+                                        React.createElement('span', {
+                                            key: 'header-label',
+                                            className: "text-sm text-gray-700 dark:text-gray-300"
+                                        }, 'ヘッダー行を含む')
+                                    ]),
+                                    React.createElement('label', {
+                                        key: 'case-option',
+                                        className: "flex items-center space-x-2 cursor-pointer"
+                                    }, [
+                                        React.createElement('input', {
+                                            key: 'case-checkbox',
+                                            type: "checkbox",
+                                            checked: ignoreCase,
+                                            onChange: (e) => handleOptionChange(setIgnoreCase, e.target.checked),
+                                            className: "w-4 h-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500"
+                                        }),
+                                        React.createElement('span', {
+                                            key: 'case-label',
+                                            className: "text-sm text-gray-700 dark:text-gray-300"
+                                        }, '大文字小文字を無視')
+                                    ]),
+                                    React.createElement('label', {
+                                        key: 'trim-option',
+                                        className: "flex items-center space-x-2 cursor-pointer"
+                                    }, [
+                                        React.createElement('input', {
+                                            key: 'trim-checkbox',
+                                            type: "checkbox",
+                                            checked: trimWhitespace,
+                                            onChange: (e) => handleOptionChange(setTrimWhitespace, e.target.checked),
+                                            className: "w-4 h-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500"
+                                        }),
+                                        React.createElement('span', {
+                                            key: 'trim-label',
+                                            className: "text-sm text-gray-700 dark:text-gray-300"
+                                        }, '先頭・末尾空白を無視')
+                                    ])
+                                ])
+                            ]),
+
+                            // エラー表示
+                            error && React.createElement('div', {
+                                key: 'error',
+                                className: "mb-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 rounded-lg text-sm"
+                            }, error),
+
+                            // クリアボタン
+                            React.createElement('button', {
+                                key: 'clear-btn',
+                                onClick: handleClear,
+                                className: "w-full px-4 py-2 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
+                            }, 'クリア')
+                        ]),
+
+                        // 結果エリア
+                        React.createElement('div', {
+                            key: 'result-area',
+                            className: "bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
+                        }, [
+                            React.createElement('div', {
+                                key: 'result-header',
+                                className: "flex items-center justify-between mb-6"
+                            }, [
+                                React.createElement('h2', {
+                                    key: 'result-title',
+                                    className: "text-xl font-semibold text-gray-800 dark:text-white"
+                                }, '結果'),
+                                outputText && React.createElement('div', {
+                                    key: 'action-buttons',
+                                    className: "flex gap-2"
+                                }, [
+                                    React.createElement('button', {
+                                        key: 'copy-btn',
+                                        onClick: handleCopy,
+                                        className: "px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 transition-colors"
+                                    }, 'コピー'),
+                                    React.createElement('button', {
+                                        key: 'download-btn',
+                                        onClick: handleDownload,
+                                        className: "px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors"
+                                    }, 'ダウンロード')
+                                ])
+                            ]),
+
+                            // 結果テキストエリア
+                            React.createElement('div', {
+                                key: 'result-container',
+                                className: "mb-4"
+                            },
+                                React.createElement('textarea', {
+                                    key: 'result-textarea',
+                                    value: outputText,
+                                    readOnly: true,
+                                    placeholder: "重複削除された CSV データがここに表示されます",
+                                    className: "w-full h-64 p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 resize-none font-mono text-sm text-gray-900 dark:text-white",
+                                    spellCheck: false
+                                })
+                            ),
+
+                            // 統計情報
+                            (statistics.totalRows > 0 || statistics.uniqueRows > 0) && React.createElement('div', {
+                                key: 'statistics',
+                                className: "bg-gray-100 dark:bg-gray-700 rounded-lg p-4"
+                            }, [
+                                React.createElement('h3', {
+                                    key: 'stats-title',
+                                    className: "text-sm font-medium text-gray-800 dark:text-white mb-3"
+                                }, '統計情報'),
+                                React.createElement('div', {
+                                    key: 'stats-grid',
+                                    className: "grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm"
+                                }, [
+                                    React.createElement('div', {
+                                        key: 'total-stat',
+                                        className: "text-center"
+                                    }, [
+                                        React.createElement('div', {
+                                            key: 'total-value',
+                                            className: "text-2xl font-bold text-blue-600 dark:text-blue-400"
+                                        }, statistics.totalRows.toLocaleString()),
+                                        React.createElement('div', {
+                                            key: 'total-label',
+                                            className: "text-gray-600 dark:text-gray-300"
+                                        }, '入力行数')
+                                    ]),
+                                    React.createElement('div', {
+                                        key: 'unique-stat',
+                                        className: "text-center"
+                                    }, [
+                                        React.createElement('div', {
+                                            key: 'unique-value',
+                                            className: "text-2xl font-bold text-green-600 dark:text-green-400"
+                                        }, statistics.uniqueRows.toLocaleString()),
+                                        React.createElement('div', {
+                                            key: 'unique-label',
+                                            className: "text-gray-600 dark:text-gray-300"
+                                        }, 'ユニーク行数')
+                                    ]),
+                                    React.createElement('div', {
+                                        key: 'removed-stat',
+                                        className: "text-center"
+                                    }, [
+                                        React.createElement('div', {
+                                            key: 'removed-value',
+                                            className: "text-2xl font-bold text-red-600 dark:text-red-400"
+                                        }, statistics.duplicatesRemoved.toLocaleString()),
+                                        React.createElement('div', {
+                                            key: 'removed-label',
+                                            className: "text-gray-600 dark:text-gray-300"
+                                        }, '削除行数')
+                                    ])
+                                ])
+                            ])
+                        ])
+                    ])
+                ]),
+
+                // 関連ツール
+                React.createElement(RelatedTools, { key: 'related-tools', currentSlug: 'csv-dedup' }),
+
+                // トーストメッセージ
+                copyMessage && React.createElement('div', {
+                    key: 'toast',
+                    className: "fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50"
+                }, copyMessage)
+            ]);
+        };
+
+        ReactDOM.render(React.createElement(CSVDeduplicator), document.getElementById('root'));
+    </script>
+</body>
+</html>

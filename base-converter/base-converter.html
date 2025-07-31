@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>進数変換ツール（2/8/10/16進数） - Pokoro Tools</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q3F3DJ865S"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-Q3F3DJ865S');
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <script src="/related-tools-config.js"></script>
+    <script src="/RelatedTools.js"></script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+        
+        const BaseConverter = () => {
+            const [inputValue, setInputValue] = useState('');
+            const [selectedBase, setSelectedBase] = useState(10);
+            const [error, setError] = useState('');
+            const [copyMessage, setCopyMessage] = useState('');
+            const [history, setHistory] = useState([]);
+
+            // 基数定義
+            const bases = [
+                { value: 2, name: 'Binary', label: '2進数', regex: /^[01]+$/ },
+                { value: 8, name: 'Octal', label: '8進数', regex: /^[0-7]+$/ },
+                { value: 10, name: 'Decimal', label: '10進数', regex: /^[0-9]+$/ },
+                { value: 16, name: 'Hex', label: '16進数', regex: /^[0-9a-fA-F]+$/ }
+            ];
+
+            // 履歴をローカルストレージから読み込み
+            useEffect(() => {
+                const savedHistory = localStorage.getItem('baseConverterHistory');
+                if (savedHistory) {
+                    try {
+                        setHistory(JSON.parse(savedHistory));
+                    } catch (e) {
+                        setHistory([]);
+                    }
+                }
+            }, []);
+
+            // バリデーション
+            const validateInput = (value, base) => {
+                if (!value.trim()) return true; // 空文字は有効
+                const baseInfo = bases.find(b => b.value === base);
+                return baseInfo ? baseInfo.regex.test(value) : false;
+            };
+
+            // 変換処理
+            const convertedValues = useMemo(() => {
+                if (!inputValue.trim() || error) {
+                    return bases.map(base => ({
+                        ...base,
+                        convertedValue: ''
+                    }));
+                }
+
+                try {
+                    // 入力値を10進数に変換
+                    const decimalValue = parseInt(inputValue, selectedBase);
+                    
+                    if (isNaN(decimalValue) || decimalValue < 0) {
+                        return bases.map(base => ({
+                            ...base,
+                            convertedValue: ''
+                        }));
+                    }
+
+                    return bases.map(base => ({
+                        ...base,
+                        convertedValue: base.value === selectedBase ? inputValue : decimalValue.toString(base.value).toUpperCase()
+                    }));
+                } catch (err) {
+                    return bases.map(base => ({
+                        ...base,
+                        convertedValue: ''
+                    }));
+                }
+            }, [inputValue, selectedBase, error]);
+
+            // 入力変更処理
+            const handleInputChange = (e) => {
+                const value = e.target.value;
+                
+                if (!validateInput(value, selectedBase)) {
+                    setError('無効な入力です');
+                } else {
+                    setError('');
+                }
+                
+                setInputValue(value);
+            };
+
+            // 基数変更処理
+            const handleBaseChange = (e) => {
+                const newBase = parseInt(e.target.value);
+                setSelectedBase(newBase);
+                
+                // 現在の入力値が新しい基数で有効かチェック
+                if (inputValue && !validateInput(inputValue, newBase)) {
+                    setError('現在の入力値は選択した基数に対して無効です');
+                } else {
+                    setError('');
+                }
+            };
+
+            // コピー処理
+            const handleCopy = async (value, baseName) => {
+                if (!value) return;
+                
+                try {
+                    await navigator.clipboard.writeText(value);
+                    setCopyMessage(`${baseName}の値をコピーしました`);
+                    setTimeout(() => setCopyMessage(''), 1500);
+                } catch (err) {
+                    setCopyMessage('コピーに失敗しました');
+                    setTimeout(() => setCopyMessage(''), 1500);
+                }
+            };
+
+            // クリア処理
+            const handleClear = () => {
+                setInputValue('');
+                setError('');
+            };
+
+            // 履歴追加
+            const addToHistory = () => {
+                if (!inputValue.trim() || error) return;
+
+                const historyItem = {
+                    value: inputValue,
+                    base: selectedBase,
+                    timestamp: Date.now()
+                };
+
+                const newHistory = [historyItem, ...history.filter(item => 
+                    !(item.value === inputValue && item.base === selectedBase)
+                )].slice(0, 5);
+
+                setHistory(newHistory);
+                localStorage.setItem('baseConverterHistory', JSON.stringify(newHistory));
+            };
+
+            // 履歴から読み込み
+            const loadFromHistory = (item) => {
+                setInputValue(item.value);
+                setSelectedBase(item.base);
+                setError('');
+            };
+
+            // 入力値が変更されたら履歴に追加
+            useEffect(() => {
+                if (inputValue && !error) {
+                    const timer = setTimeout(addToHistory, 1000);
+                    return () => clearTimeout(timer);
+                }
+            }, [inputValue, selectedBase, error]);
+
+            return React.createElement('div', {
+                className: "min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 dark:from-gray-900 dark:to-gray-800"
+            }, [
+                // ヘッダー
+                React.createElement('header', {
+                    key: 'header',
+                    className: "bg-white dark:bg-gray-800 shadow-sm"
+                }, 
+                    React.createElement('div', {
+                        className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
+                    }, [
+                        React.createElement('div', {
+                            key: 'nav',
+                            className: "mb-4"
+                        }, 
+                            React.createElement('a', {
+                                key: 'back',
+                                href: '/',
+                                className: "inline-flex items-center text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                            }, [
+                                React.createElement('svg', {
+                                    key: 'arrow',
+                                    className: "w-5 h-5 mr-2",
+                                    fill: "none",
+                                    stroke: "currentColor",
+                                    viewBox: "0 0 24 24"
+                                },
+                                    React.createElement('path', {
+                                        strokeLinecap: "round",
+                                        strokeLinejoin: "round",
+                                        strokeWidth: 2,
+                                        d: "M15 19l-7-7 7-7"
+                                    })
+                                ),
+                                'ツール一覧に戻る'
+                            ])
+                        ),
+                        React.createElement('h1', {
+                            key: 'title',
+                            className: "text-3xl font-bold text-gray-900 dark:text-white text-center"
+                        }, [
+                            React.createElement('span', {
+                                key: 'icon',
+                                className: "mr-3"
+                            }, '🔢'),
+                            '進数変換ツール（2/8/10/16進数）'
+                        ]),
+                        React.createElement('p', {
+                            key: 'subtitle',
+                            className: "text-center text-gray-600 dark:text-gray-300 mt-2"
+                        }, '2進数・8進数・10進数・16進数の相互変換')
+                    ])
+                ),
+
+                // メイン
+                React.createElement('main', {
+                    key: 'main',
+                    className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+                }, [
+                    // 変換エリア
+                    React.createElement('div', {
+                        key: 'converter',
+                        className: "bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6"
+                    }, [
+                        React.createElement('div', {
+                            key: 'converter-grid',
+                            className: "grid grid-cols-1 lg:grid-cols-2 gap-8"
+                        }, [
+                            // 入力エリア
+                            React.createElement('div', {
+                                key: 'input-area'
+                            }, [
+                                React.createElement('h2', {
+                                    key: 'input-title',
+                                    className: "text-xl font-semibold text-gray-800 dark:text-white mb-6"
+                                }, '入力'),
+
+                                // 基数選択
+                                React.createElement('div', {
+                                    key: 'base-select-container',
+                                    className: "mb-4"
+                                }, [
+                                    React.createElement('label', {
+                                        key: 'base-label',
+                                        className: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                                    }, '基数'),
+                                    React.createElement('select', {
+                                        key: 'base-select',
+                                        value: selectedBase,
+                                        onChange: handleBaseChange,
+                                        className: "w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    }, 
+                                        bases.map(base =>
+                                            React.createElement('option', {
+                                                key: base.value,
+                                                value: base.value
+                                            }, `${base.label} (${base.name})`)
+                                        )
+                                    )
+                                ]),
+
+                                // 数値入力
+                                React.createElement('div', {
+                                    key: 'value-input-container',
+                                    className: "mb-4"
+                                }, [
+                                    React.createElement('label', {
+                                        key: 'value-label',
+                                        className: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                                    }, '数値'),
+                                    React.createElement('input', {
+                                        key: 'value-input',
+                                        type: "text",
+                                        value: inputValue,
+                                        onChange: handleInputChange,
+                                        placeholder: `${bases.find(b => b.value === selectedBase)?.label}で入力してください`,
+                                        className: `w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${error ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'}`
+                                    })
+                                ]),
+
+                                // エラー表示
+                                error && React.createElement('div', {
+                                    key: 'error',
+                                    className: "mb-4 text-red-600 dark:text-red-400 text-sm"
+                                }, error),
+
+                                // クリアボタン
+                                React.createElement('button', {
+                                    key: 'clear-btn',
+                                    onClick: handleClear,
+                                    className: "w-full px-4 py-2 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-200"
+                                }, 'クリア')
+                            ]),
+
+                            // 結果エリア
+                            React.createElement('div', {
+                                key: 'result-area'
+                            }, [
+                                React.createElement('h2', {
+                                    key: 'result-title',
+                                    className: "text-xl font-semibold text-gray-800 dark:text-white mb-6"
+                                }, '変換結果'),
+
+                                React.createElement('div', {
+                                    key: 'results-table',
+                                    className: "overflow-hidden rounded-lg border border-gray-200 dark:border-gray-600"
+                                }, [
+                                    // テーブルヘッダー
+                                    React.createElement('div', {
+                                        key: 'table-header',
+                                        className: "bg-gray-50 dark:bg-gray-700 grid grid-cols-3 gap-4 p-4 text-sm font-medium text-gray-700 dark:text-gray-300"
+                                    }, [
+                                        React.createElement('div', { key: 'h1' }, '基数'),
+                                        React.createElement('div', { key: 'h2' }, '値'),
+                                        React.createElement('div', { key: 'h3', className: "text-center" }, 'コピー')
+                                    ]),
+
+                                    // テーブル行
+                                    ...convertedValues.map((base, index) =>
+                                        React.createElement('div', {
+                                            key: base.value,
+                                            className: `grid grid-cols-3 gap-4 p-4 border-t border-gray-200 dark:border-gray-600 ${index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700'}`
+                                        }, [
+                                            React.createElement('div', {
+                                                key: 'base-name',
+                                                className: "text-sm font-medium text-gray-700 dark:text-gray-300"
+                                            }, base.label),
+                                            React.createElement('div', {
+                                                key: 'base-value',
+                                                className: "font-mono text-sm text-gray-900 dark:text-white break-all"
+                                            }, base.convertedValue || (inputValue && !error ? '無効な入力' : '-')),
+                                            React.createElement('div', {
+                                                key: 'copy-btn-container',
+                                                className: "text-center"
+                                            }, 
+                                                base.convertedValue && React.createElement('button', {
+                                                    onClick: () => handleCopy(base.convertedValue, base.label),
+                                                    className: "p-2 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 transition-colors"
+                                                },
+                                                    React.createElement('svg', {
+                                                        className: "w-4 h-4",
+                                                        fill: "none",
+                                                        stroke: "currentColor",
+                                                        viewBox: "0 0 24 24"
+                                                    },
+                                                        React.createElement('path', {
+                                                            strokeLinecap: "round",
+                                                            strokeLinejoin: "round",
+                                                            strokeWidth: 2,
+                                                            d: "M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                                        })
+                                                    )
+                                                )
+                                            )
+                                        ])
+                                    )
+                                ])
+                            ])
+                        ])
+                    ]),
+
+                    // 履歴セクション
+                    history.length > 0 && React.createElement('div', {
+                        key: 'history-section',
+                        className: "bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6"
+                    }, [
+                        React.createElement('h2', {
+                            key: 'history-title',
+                            className: "text-xl font-semibold text-gray-800 dark:text-white mb-4"
+                        }, '履歴（最新5件）'),
+                        React.createElement('div', {
+                            key: 'history-grid',
+                            className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+                        },
+                            history.map((item, index) =>
+                                React.createElement('div', {
+                                    key: index,
+                                    onClick: () => loadFromHistory(item),
+                                    className: "p-4 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                }, [
+                                    React.createElement('div', {
+                                        key: 'hist-base',
+                                        className: "text-sm text-gray-600 dark:text-gray-400 mb-1"
+                                    }, bases.find(b => b.value === item.base)?.label),
+                                    React.createElement('div', {
+                                        key: 'hist-value',
+                                        className: "font-mono text-lg text-gray-900 dark:text-white mb-2"
+                                    }, item.value),
+                                    React.createElement('div', {
+                                        key: 'hist-time',
+                                        className: "text-xs text-gray-500 dark:text-gray-400"
+                                    }, new Date(item.timestamp).toLocaleString())
+                                ])
+                            )
+                        )
+                    ]),
+
+                    // 関連ツール
+                    React.createElement(RelatedTools, { key: 'related-tools', currentSlug: 'base-converter' })
+                ]),
+
+                // トーストメッセージ
+                copyMessage && React.createElement('div', {
+                    key: 'toast',
+                    className: "fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50"
+                }, copyMessage)
+            ]);
+        };
+
+        ReactDOM.render(React.createElement(BaseConverter), document.getElementById('root'));
+    </script>
+</body>
+</html>

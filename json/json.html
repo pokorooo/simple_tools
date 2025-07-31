@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSONフォーマッター（整形・検証）</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q3F3DJ865S"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-Q3F3DJ865S');
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="/related-tools-config.js"></script>
+    <script src="/RelatedTools.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState } = React;
+
+        const JsonFormatter = () => {
+          const [inputJson, setInputJson] = useState('');
+          const [formattedJson, setFormattedJson] = useState('');
+          const [error, setError] = useState('');
+          const [copyMessage, setCopyMessage] = useState('');
+
+          const handleInputChange = (e) => {
+            const value = e.target.value;
+            setInputJson(value);
+            
+            if (value.trim() === '') {
+              setFormattedJson('');
+              setError('');
+              return;
+            }
+
+            try {
+              const parsed = JSON.parse(value);
+              const formatted = JSON.stringify(parsed, null, 2);
+              setFormattedJson(formatted);
+              setError('');
+            } catch (err) {
+              setError('無効なJSON形式です: ' + err.message);
+              setFormattedJson('');
+            }
+          };
+
+          const handleCopy = async () => {
+            if (formattedJson) {
+              try {
+                await navigator.clipboard.writeText(formattedJson);
+                setCopyMessage('コピーしました');
+                setTimeout(() => setCopyMessage(''), 2000);
+              } catch (err) {
+                setCopyMessage('コピーに失敗しました');
+                setTimeout(() => setCopyMessage(''), 2000);
+              }
+            }
+          };
+
+          return React.createElement('div', {
+            className: "min-h-screen bg-gray-100 p-4"
+          }, 
+            React.createElement('div', {
+              className: "max-w-7xl mx-auto"
+            }, [
+              React.createElement('div', {
+                key: 'nav',
+                className: "mb-4"
+              }, 
+                React.createElement('a', {
+                  key: 'back',
+                  href: '/',
+                  className: "inline-flex items-center text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                }, [
+                  React.createElement('svg', {
+                    key: 'arrow',
+                    className: "w-5 h-5 mr-2",
+                    fill: "none",
+                    stroke: "currentColor",
+                    viewBox: "0 0 24 24"
+                  },
+                    React.createElement('path', {
+                      strokeLinecap: "round",
+                      strokeLinejoin: "round",
+                      strokeWidth: 2,
+                      d: "M15 19l-7-7 7-7"
+                    })
+                  ),
+                  'ツール一覧に戻る'
+                ])
+              ),
+              
+              React.createElement('h1', {
+                key: 'title',
+                className: "text-3xl font-bold text-gray-800 mb-8 text-center"
+              }, 'JSONフォーマッター（整形・検証）'),
+              
+              React.createElement('div', {
+                key: 'grid',
+                className: "grid grid-cols-1 lg:grid-cols-2 gap-6"
+              }, [
+                React.createElement('div', {
+                  key: 'input-section',
+                  className: "bg-white rounded-lg shadow-lg p-6"
+                }, [
+                  React.createElement('div', {
+                    key: 'input-header',
+                    className: "flex items-center justify-between mb-4"
+                  },
+                    React.createElement('h2', {
+                      className: "text-xl font-semibold text-gray-700"
+                    }, '入力')
+                  ),
+                  React.createElement('textarea', {
+                    key: 'input-textarea',
+                    value: inputJson,
+                    onChange: handleInputChange,
+                    placeholder: "ここにJSONを入力してください",
+                    className: "w-full h-96 p-4 border border-gray-300 rounded-lg font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  })
+                ]),
+
+                React.createElement('div', {
+                  key: 'output-section',
+                  className: "bg-white rounded-lg shadow-lg p-6"
+                }, [
+                  React.createElement('div', {
+                    key: 'output-header',
+                    className: "flex items-center justify-between mb-4"
+                  }, [
+                    React.createElement('h2', {
+                      key: 'output-title',
+                      className: "text-xl font-semibold text-gray-700"
+                    }, '整形結果'),
+                    formattedJson && React.createElement('div', {
+                      key: 'copy-controls',
+                      className: "flex items-center gap-2"
+                    }, [
+                      copyMessage && React.createElement('span', {
+                        key: 'copy-message',
+                        className: "text-green-600 text-sm"
+                      }, copyMessage),
+                      React.createElement('button', {
+                        key: 'copy-button',
+                        onClick: handleCopy,
+                        className: "px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors duration-200 text-sm"
+                      }, 'コピー')
+                    ])
+                  ]),
+                  
+                  error ? React.createElement('div', {
+                    key: 'error-display',
+                    className: "w-full h-96 p-4 bg-red-50 border border-red-300 rounded-lg"
+                  },
+                    React.createElement('p', {
+                      className: "text-red-600 font-mono text-sm"
+                    }, error)
+                  ) : React.createElement('textarea', {
+                    key: 'output-textarea',
+                    value: formattedJson,
+                    readOnly: true,
+                    placeholder: "整形されたJSONがここに表示されます",
+                    className: "w-full h-96 p-4 border border-gray-300 rounded-lg font-mono text-sm resize-none bg-gray-50 focus:outline-none"
+                  })
+                ])
+              ]),
+
+              // 関連ツール
+              React.createElement(RelatedTools, { key: 'related-tools', currentSlug: 'json' })
+            ])
+          );
+        };
+
+        ReactDOM.render(React.createElement(JsonFormatter), document.getElementById('root'));
+    </script>
+</body>
+</html>

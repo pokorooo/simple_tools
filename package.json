@@ -1,0 +1,13 @@
+{
+  "name": "pokoro-tools",
+  "version": "1.0.0",
+  "description": "Pokoro Tools - 便利なWebツール集",
+  "main": "index.html",
+  "scripts": {
+    "start": "vercel dev",
+    "build": "echo 'No build step needed for static site'"
+  },
+  "keywords": ["tools", "utilities", "web", "pokoro"],
+  "author": "Pokoro",
+  "license": "MIT"
+}

@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>画像リサイズ＆品質調整ツール - Pokoro Tools</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q3F3DJ865S"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-Q3F3DJ865S');
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <script src="/related-tools-config.js"></script>
+    <script src="/RelatedTools.js"></script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useRef, useEffect } = React;
+        
+        const ImageResizer = () => {
+            const [originalFile, setOriginalFile] = useState(null);
+            const [originalPreview, setOriginalPreview] = useState('');
+            const [resizedFile, setResizedFile] = useState(null);
+            const [resizedPreview, setResizedPreview] = useState('');
+            const [width, setWidth] = useState('');
+            const [quality, setQuality] = useState(80);
+            const [format, setFormat] = useState('keep');
+            const [isDragOver, setIsDragOver] = useState(false);
+            const [isProcessing, setIsProcessing] = useState(false);
+            const [error, setError] = useState('');
+            const [downloadMessage, setDownloadMessage] = useState('');
+            const [history, setHistory] = useState([]);
+            const fileInputRef = useRef(null);
+
+            const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+            const SUPPORTED_FORMATS = ['image/jpeg', 'image/png', 'image/webp'];
+
+            // 履歴をローカルストレージから読み込み
+            useEffect(() => {
+                const savedHistory = localStorage.getItem('imageResizerHistory');
+                if (savedHistory) {
+                    try {
+                        setHistory(JSON.parse(savedHistory));
+                    } catch (e) {
+                        setHistory([]);
+                    }
+                }
+            }, []);
+
+            // ファイルサイズを KB で表示
+            const formatFileSize = (bytes) => {
+                return (bytes / 1024).toFixed(1) + ' KB';
+            };
+
+            // 画像の自然サイズを取得
+            const getImageDimensions = (file) => {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        resolve({ width: img.naturalWidth, height: img.naturalHeight });
+                    };
+                    img.src = URL.createObjectURL(file);
+                });
+            };
+
+            // ファイル処理
+            const handleFile = async (selectedFile) => {
+                setError('');
+                setResizedFile(null);
+                setResizedPreview('');
+                
+                if (!selectedFile) return;
+
+                // ファイルサイズチェック
+                if (selectedFile.size > MAX_FILE_SIZE) {
+                    setError(`ファイルサイズが大きすぎます（最大 ${MAX_FILE_SIZE / 1024 / 1024}MB）`);
+                    return;
+                }
+
+                // 形式チェック
+                if (!SUPPORTED_FORMATS.includes(selectedFile.type)) {
+                    setError('対応していない形式です（JPEG, PNG, WebP のみ対応）');
+                    return;
+                }
+
+                setOriginalFile(selectedFile);
+
+                // プレビュー作成
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    setOriginalPreview(e.target.result);
+                };
+                reader.readAsDataURL(selectedFile);
+
+                // 画像の幅を取得してデフォルト値に設定
+                try {
+                    const dimensions = await getImageDimensions(selectedFile);
+                    setWidth(dimensions.width.toString());
+                } catch (err) {
+                    console.error('画像サイズの取得に失敗:', err);
+                }
+            };
+
+            // ドラッグ＆ドロップ処理
+            const handleDragOver = (e) => {
+                e.preventDefault();
+                setIsDragOver(true);
+            };
+
+            const handleDragLeave = (e) => {
+                e.preventDefault();
+                setIsDragOver(false);
+            };
+
+            const handleDrop = (e) => {
+                e.preventDefault();
+                setIsDragOver(false);
+                
+                const droppedFile = e.dataTransfer.files[0];
+                handleFile(droppedFile);
+            };
+
+            const handleFileSelect = (e) => {
+                const selectedFile = e.target.files[0];
+                handleFile(selectedFile);
+            };
+
+            // バリデーション
+            const isValidWidth = () => {
+                const w = parseInt(width);
+                return !isNaN(w) && w > 0 && w <= 10000;
+            };
+
+            const isValidQuality = () => {
+                return quality >= 0 && quality <= 100;
+            };
+
+            // リサイズ処理
+            const handleResize = async () => {
+                if (!originalFile || !isValidWidth() || !isValidQuality()) {
+                    setError('有効な幅と品質を指定してください');
+                    return;
+                }
+
+                setIsProcessing(true);
+                setError('');
+
+                try {
+                    const targetWidth = parseInt(width);
+                    const targetQuality = quality / 100;
+
+                    // 出力形式決定
+                    let outputType = originalFile.type;
+                    if (format !== 'keep') {
+                        outputType = `image/${format}`;
+                    }
+
+                    // 圧縮オプション
+                    const options = {
+                        maxWidthOrHeight: targetWidth,
+                        useWebWorker: true,
+                        fileType: outputType
+                    };
+
+                    // JPEG/WebP の場合のみ品質設定
+                    if (outputType === 'image/jpeg' || outputType === 'image/webp') {
+                        options.quality = targetQuality;
+                    }
+
+                    // 画像圧縮
+                    const compressedFile = await imageCompression(originalFile, options);
+
+                    // ファイル名生成
+                    const originalName = originalFile.name.split('.').slice(0, -1).join('.');
+                    const extension = outputType.split('/')[1];
+                    const newFileName = `${originalName}_w${targetWidth}.${extension}`;
+
+                    // 新しいFileオブジェクト作成
+                    const renamedFile = new File([compressedFile], newFileName, {
+                        type: outputType,
+                        lastModified: Date.now()
+                    });
+
+                    setResizedFile(renamedFile);
+
+                    // プレビュー作成
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        setResizedPreview(e.target.result);
+                    };
+                    reader.readAsDataURL(renamedFile);
+
+                    // 履歴に追加
+                    addToHistory({
+                        originalName: originalFile.name,
+                        originalSize: originalFile.size,
+                        resizedName: renamedFile.name,
+                        resizedSize: renamedFile.size,
+                        width: targetWidth,
+                        quality: quality,
+                        format: format,
+                        timestamp: Date.now()
+                    });
+
+                } catch (err) {
+                    setError('画像の処理に失敗しました: ' + err.message);
+                } finally {
+                    setIsProcessing(false);
+                }
+            };
+
+            // 履歴に追加
+            const addToHistory = (item) => {
+                const newHistory = [item, ...history.slice(0, 2)];
+                setHistory(newHistory);
+                localStorage.setItem('imageResizerHistory', JSON.stringify(newHistory));
+            };
+
+            // ダウンロード処理
+            const handleDownload = () => {
+                if (!resizedFile) return;
+
+                const url = URL.createObjectURL(resizedFile);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = resizedFile.name;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+
+                setDownloadMessage('Downloaded!');
+                setTimeout(() => setDownloadMessage(''), 1500);
+            };
+
+            // ファイル選択ボタンクリック
+            const handleFileButtonClick = () => {
+                fileInputRef.current?.click();
+            };
+
+            // クリア処理
+            const handleClear = () => {
+                setOriginalFile(null);
+                setOriginalPreview('');
+                setResizedFile(null);
+                setResizedPreview('');
+                setWidth('');
+                setError('');
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                }
+            };
+
+            return React.createElement('div', {
+                className: "min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-gray-800"
+            }, [
+                // ヘッダー
+                React.createElement('header', {
+                    key: 'header',
+                    className: "bg-white dark:bg-gray-800 shadow-sm"
+                }, 
+                    React.createElement('div', {
+                        className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
+                    }, [
+                        React.createElement('div', {
+                            key: 'nav',
+                            className: "mb-4"
+                        }, 
+                            React.createElement('a', {
+                                key: 'back',
+                                href: '/',
+                                className: "inline-flex items-center text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                            }, [
+                                React.createElement('svg', {
+                                    key: 'arrow',
+                                    className: "w-5 h-5 mr-2",
+                                    fill: "none",
+                                    stroke: "currentColor",
+                                    viewBox: "0 0 24 24"
+                                },
+                                    React.createElement('path', {
+                                        strokeLinecap: "round",
+                                        strokeLinejoin: "round",
+                                        strokeWidth: 2,
+                                        d: "M15 19l-7-7 7-7"
+                                    })
+                                ),
+                                'ツール一覧に戻る'
+                            ])
+                        ),
+                        React.createElement('h1', {
+                            key: 'title',
+                            className: "text-3xl font-bold text-gray-900 dark:text-white text-center"
+                        }, [
+                            React.createElement('span', {
+                                key: 'icon',
+                                className: "mr-3"
+                            }, '🖼️'),
+                            '画像リサイズ＆品質調整ツール'
+                        ]),
+                        React.createElement('p', {
+                            key: 'subtitle',
+                            className: "text-center text-gray-600 dark:text-gray-300 mt-2"
+                        }, '画像のサイズと品質を調整してダウンロード')
+                    ])
+                ),
+
+                // メイン
+                React.createElement('main', {
+                    key: 'main',
+                    className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+                }, [
+                    // メインエリア
+                    React.createElement('div', {
+                        key: 'main-area',
+                        className: "grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8"
+                    }, [
+                        // 入力エリア
+                        React.createElement('div', {
+                            key: 'input-area',
+                            className: "bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
+                        }, [
+                            React.createElement('h2', {
+                                key: 'input-title',
+                                className: "text-xl font-semibold text-gray-800 dark:text-white mb-6"
+                            }, '画像アップロード'),
+
+                            // ドラッグ＆ドロップ領域
+                            React.createElement('div', {
+                                key: 'drop-zone',
+                                onDragOver: handleDragOver,
+                                onDragLeave: handleDragLeave,
+                                onDrop: handleDrop,
+                                className: `border-2 border-dashed rounded-lg p-8 text-center transition-colors mb-6 ${
+                                    isDragOver 
+                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' 
+                                        : 'border-gray-300 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500'
+                                }`
+                            }, [
+                                React.createElement('svg', {
+                                    key: 'upload-icon',
+                                    className: "mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4",
+                                    stroke: "currentColor",
+                                    fill: "none",
+                                    viewBox: "0 0 48 48"
+                                },
+                                    React.createElement('path', {
+                                        d: "M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02",
+                                        strokeWidth: 2,
+                                        strokeLinecap: "round",
+                                        strokeLinejoin: "round"
+                                    })
+                                ),
+                                React.createElement('p', {
+                                    key: 'drop-text',
+                                    className: "text-gray-600 dark:text-gray-300 mb-2"
+                                }, '画像をドラッグ＆ドロップ'),
+                                React.createElement('p', {
+                                    key: 'or-text',
+                                    className: "text-gray-500 dark:text-gray-400 text-sm mb-4"
+                                }, 'または'),
+                                React.createElement('button', {
+                                    key: 'file-button',
+                                    onClick: handleFileButtonClick,
+                                    className: "px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 transition-colors"
+                                }, '画像を選択'),
+                                React.createElement('input', {
+                                    key: 'file-input',
+                                    ref: fileInputRef,
+                                    type: 'file',
+                                    accept: 'image/jpeg,image/png,image/webp',
+                                    onChange: handleFileSelect,
+                                    className: 'hidden'
+                                }),
+                                React.createElement('p', {
+                                    key: 'format-info',
+                                    className: "text-xs text-gray-500 dark:text-gray-400 mt-2"
+                                }, 'JPEG, PNG, WebP（最大10MB）')
+                            ]),
+
+                            // オプション
+                            originalFile && React.createElement('div', {
+                                key: 'options',
+                                className: "space-y-6"
+                            }, [
+                                React.createElement('h3', {
+                                    key: 'options-title',
+                                    className: "text-lg font-medium text-gray-800 dark:text-white"
+                                }, 'リサイズオプション'),
+
+                                // 幅設定
+                                React.createElement('div', {
+                                    key: 'width-setting'
+                                }, [
+                                    React.createElement('label', {
+                                        key: 'width-label',
+                                        className: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                                    }, '幅 (px)'),
+                                    React.createElement('input', {
+                                        key: 'width-input',
+                                        type: 'number',
+                                        value: width,
+                                        onChange: (e) => setWidth(e.target.value),
+                                        min: '1',
+                                        max: '10000',
+                                        className: `w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                                            width && !isValidWidth() ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'
+                                        }`
+                                    })
+                                ]),
+
+                                // 品質設定
+                                React.createElement('div', {
+                                    key: 'quality-setting'
+                                }, [
+                                    React.createElement('label', {
+                                        key: 'quality-label',
+                                        className: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                                    }, `品質 (${quality}%)`),
+                                    React.createElement('input', {
+                                        key: 'quality-slider',
+                                        type: 'range',
+                                        min: '0',
+                                        max: '100',
+                                        value: quality,
+                                        onChange: (e) => setQuality(parseInt(e.target.value)),
+                                        className: "w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                                    }),
+                                    React.createElement('div', {
+                                        key: 'quality-badges',
+                                        className: "flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1"
+                                    }, [
+                                        React.createElement('span', { key: 'low' }, '低品質'),
+                                        React.createElement('span', { key: 'high' }, '高品質')
+                                    ])
+                                ]),
+
+                                // 形式設定
+                                React.createElement('div', {
+                                    key: 'format-setting'
+                                }, [
+                                    React.createElement('label', {
+                                        key: 'format-label',
+                                        className: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                                    }, '出力形式'),
+                                    React.createElement('select', {
+                                        key: 'format-select',
+                                        value: format,
+                                        onChange: (e) => setFormat(e.target.value),
+                                        className: "w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    }, [
+                                        React.createElement('option', { key: 'keep', value: 'keep' }, '元の形式を保持'),
+                                        React.createElement('option', { key: 'jpeg', value: 'jpeg' }, 'JPEG'),
+                                        React.createElement('option', { key: 'png', value: 'png' }, 'PNG'),
+                                        React.createElement('option', { key: 'webp', value: 'webp' }, 'WebP')
+                                    ])
+                                ]),
+
+                                // アクションボタン
+                                React.createElement('div', {
+                                    key: 'actions',
+                                    className: "flex gap-4"
+                                }, [
+                                    React.createElement('button', {
+                                        key: 'resize-btn',
+                                        onClick: handleResize,
+                                        disabled: isProcessing || !isValidWidth() || !isValidQuality(),
+                                        className: `flex-1 px-6 py-3 font-medium rounded-lg transition-colors ${
+                                            !isProcessing && isValidWidth() && isValidQuality()
+                                                ? 'bg-purple-600 text-white hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600'
+                                                : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
+                                        }`
+                                    }, isProcessing ? 'Processing...' : 'リサイズ'),
+                                    React.createElement('button', {
+                                        key: 'clear-btn',
+                                        onClick: handleClear,
+                                        className: "px-6 py-3 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
+                                    }, 'クリア')
+                                ])
+                            ]),
+
+                            // エラー表示
+                            error && React.createElement('div', {
+                                key: 'error',
+                                className: "mt-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 rounded-lg text-sm"
+                            }, error)
+                        ]),
+
+                        // プレビューエリア
+                        React.createElement('div', {
+                            key: 'preview-area',
+                            className: "bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
+                        }, [
+                            React.createElement('div', {
+                                key: 'preview-header',
+                                className: "flex items-center justify-between mb-6"
+                            }, [
+                                React.createElement('h2', {
+                                    key: 'preview-title',
+                                    className: "text-xl font-semibold text-gray-800 dark:text-white"
+                                }, 'プレビュー'),
+                                resizedFile && React.createElement('button', {
+                                    key: 'download-btn',
+                                    onClick: handleDownload,
+                                    className: "px-6 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 transition-colors"
+                                }, 'ダウンロード')
+                            ]),
+
+                            // 画像プレビュー
+                            React.createElement('div', {
+                                key: 'preview-images',
+                                className: "space-y-6"
+                            }, [
+                                // 元画像
+                                originalPreview && React.createElement('div', {
+                                    key: 'original-preview'
+                                }, [
+                                    React.createElement('h3', {
+                                        key: 'original-title',
+                                        className: "text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                                    }, '元画像'),
+                                    React.createElement('div', {
+                                        key: 'original-container',
+                                        className: "border border-gray-200 dark:border-gray-600 rounded-lg p-4 text-center"
+                                    }, [
+                                        React.createElement('img', {
+                                            key: 'original-img',
+                                            src: originalPreview,
+                                            alt: 'Original',
+                                            className: "max-w-full max-h-48 mx-auto rounded"
+                                        }),
+                                        React.createElement('p', {
+                                            key: 'original-size',
+                                            className: "text-sm text-gray-500 dark:text-gray-400 mt-2"
+                                        }, `${formatFileSize(originalFile.size)}`)
+                                    ])
+                                ]),
+
+                                // リサイズ後画像
+                                resizedPreview && React.createElement('div', {
+                                    key: 'resized-preview'
+                                }, [
+                                    React.createElement('h3', {
+                                        key: 'resized-title',
+                                        className: "text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                                    }, 'リサイズ後'),
+                                    React.createElement('div', {
+                                        key: 'resized-container',
+                                        className: "border border-gray-200 dark:border-gray-600 rounded-lg p-4 text-center"
+                                    }, [
+                                        React.createElement('img', {
+                                            key: 'resized-img',
+                                            src: resizedPreview,
+                                            alt: 'Resized',
+                                            className: "max-w-full max-h-48 mx-auto rounded"
+                                        }),
+                                        React.createElement('p', {
+                                            key: 'resized-size',
+                                            className: "text-sm text-gray-500 dark:text-gray-400 mt-2"
+                                        }, `${formatFileSize(resizedFile.size)}`)
+                                    ])
+                                ])
+                            ]),
+
+                            // プレースホルダー
+                            !originalPreview && React.createElement('div', {
+                                key: 'placeholder',
+                                className: "text-center text-gray-500 dark:text-gray-400 py-16"
+                            }, '画像を選択するとプレビューが表示されます')
+                        ])
+                    ]),
+
+                    // 履歴セクション
+                    history.length > 0 && React.createElement('div', {
+                        key: 'history-section',
+                        className: "bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
+                    }, [
+                        React.createElement('h2', {
+                            key: 'history-title',
+                            className: "text-xl font-semibold text-gray-800 dark:text-white mb-4"
+                        }, '処理履歴（最新3件）'),
+                        React.createElement('div', {
+                            key: 'history-grid',
+                            className: "grid grid-cols-1 md:grid-cols-3 gap-4"
+                        },
+                            history.map((item, index) =>
+                                React.createElement('div', {
+                                    key: index,
+                                    className: "p-4 border border-gray-200 dark:border-gray-600 rounded-lg"
+                                }, [
+                                    React.createElement('div', {
+                                        key: 'hist-filename',
+                                        className: "font-medium text-gray-900 dark:text-white mb-2 truncate"
+                                    }, item.resizedName),
+                                    React.createElement('div', {
+                                        key: 'hist-details',
+                                        className: "text-sm text-gray-600 dark:text-gray-400 space-y-1"
+                                    }, [
+                                        React.createElement('div', { key: 'size' }, `${formatFileSize(item.originalSize)} → ${formatFileSize(item.resizedSize)}`),
+                                        React.createElement('div', { key: 'settings' }, `幅: ${item.width}px, 品質: ${item.quality}%`),
+                                        React.createElement('div', { key: 'time' }, new Date(item.timestamp).toLocaleString())
+                                    ])
+                                ])
+                            )
+                        )
+                    ])
+                ]),
+
+                // 関連ツール
+                React.createElement(RelatedTools, { key: 'related-tools', currentSlug: 'image-resizer' }),
+
+                // スピナー
+                isProcessing && React.createElement('div', {
+                    key: 'spinner',
+                    className: "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+                }, 
+                    React.createElement('div', {
+                        className: "bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex items-center gap-4"
+                    }, [
+                        React.createElement('div', {
+                            key: 'spinner-icon',
+                            className: "animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"
+                        }),
+                        React.createElement('span', {
+                            key: 'spinner-text',
+                            className: "text-gray-900 dark:text-white"
+                        }, '画像を処理中...')
+                    ])
+                ),
+
+                // トーストメッセージ
+                downloadMessage && React.createElement('div', {
+                    key: 'toast',
+                    className: "fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50"
+                }, downloadMessage)
+            ]);
+        };
+
+        ReactDOM.render(React.createElement(ImageResizer), document.getElementById('root'));
+    </script>
+</body>
+</html>

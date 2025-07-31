@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cron式パーサー & 次回実行表示ツール - Pokoro Tools</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q3F3DJ865S"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-Q3F3DJ865S');
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/cronstrue@2.49.0/dist/cronstrue.min.js"></script>
+    <script src="https://unpkg.com/cron-parser@4.9.0/lib/parser.js"></script>
+    <script src="https://unpkg.com/date-fns@3.6.0/index.js"></script>
+    <script src="https://unpkg.com/date-fns-tz@2.0.0/index.js"></script>
+    <script src="/related-tools-config.js"></script>
+    <script src="/RelatedTools.js"></script>
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
+
+        const CronParserTool = () => {
+            const [cronExpression, setCronExpression] = useState('0 3 * * *');
+            const [timezone, setTimezone] = useState('Asia/Tokyo');
+            const [includeSeconds, setIncludeSeconds] = useState(false);
+            const [error, setError] = useState('');
+            const [naturalLanguage, setNaturalLanguage] = useState('');
+            const [nextExecutions, setNextExecutions] = useState([]);
+            const [history, setHistory] = useState([]);
+            const [toastVisible, setToastVisible] = useState(false);
+
+            const timezones = [
+                'Asia/Tokyo', 'UTC', 'America/New_York', 'America/Los_Angeles',
+                'Europe/London', 'Europe/Paris', 'Asia/Shanghai', 'Asia/Seoul'
+            ];
+
+            const presets = [
+                { label: '毎分', expression: '* * * * *', seconds: false },
+                { label: '毎時0分', expression: '0 * * * *', seconds: false },
+                { label: '毎日3時', expression: '0 3 * * *', seconds: false },
+                { label: '毎週月曜9時', expression: '0 9 * * 1', seconds: false },
+                { label: '毎月1日0時', expression: '0 0 1 * *', seconds: false },
+                { label: '毎30秒', expression: '*/30 * * * * *', seconds: true },
+                { label: '平日9時', expression: '0 9 * * 1-5', seconds: false },
+                { label: '土日10時', expression: '0 10 * * 0,6', seconds: false }
+            ];
+
+            useEffect(() => {
+                const savedHistory = localStorage.getItem('cronHistory');
+                if (savedHistory) {
+                    setHistory(JSON.parse(savedHistory));
+                }
+            }, []);
+
+            useEffect(() => {
+                parseCronExpression();
+            }, [cronExpression, timezone, includeSeconds]);
+
+            const parseCronExpression = () => {
+                if (!cronExpression.trim()) {
+                    setError('');
+                    setNaturalLanguage('');
+                    setNextExecutions([]);
+                    return;
+                }
+
+                try {
+                    // Detect if expression includes seconds
+                    const parts = cronExpression.trim().split(/\s+/);
+                    const hasSeconds = parts.length === 6;
+                    
+                    // Parse natural language with cronstrue
+                    try {
+                        const description = cronstrue.toString(cronExpression, {
+                            locale: 'ja',
+                            use24HourTimeFormat: true
+                        });
+                        setNaturalLanguage(description);
+                    } catch (cronstrueError) {
+                        setNaturalLanguage('自然言語での説明が生成できませんでした');
+                    }
+
+                    // Parse next executions with cron-parser
+                    const parser = require('cron-parser');
+                    const interval = parser.parseExpression(cronExpression, {
+                        currentDate: new Date(),
+                        tz: timezone,
+                        iterator: true
+                    });
+
+                    const executions = [];
+                    for (let i = 0; i < 10; i++) {
+                        const next = interval.next();
+                        const date = next.value.toDate();
+                        executions.push({
+                            index: i + 1,
+                            date: date,
+                            formatted: formatDate(date, timezone)
+                        });
+                    }
+
+                    setNextExecutions(executions);
+                    setError('');
+
+                } catch (err) {
+                    setError(`Cron式の解析エラー: ${err.message}`);
+                    setNaturalLanguage('');
+                    setNextExecutions([]);
+                }
+            };
+
+            const formatDate = (date, tz) => {
+                try {
+                    return new Intl.DateTimeFormat('ja-JP', {
+                        timeZone: tz,
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false
+                    }).format(date).replace(/\//g, '-');
+                } catch (err) {
+                    return date.toISOString().slice(0, 19).replace('T', ' ');
+                }
+            };
+
+            const handlePresetClick = (preset) => {
+                setCronExpression(preset.expression);
+                setIncludeSeconds(preset.seconds);
+                addToHistory(preset.expression);
+            };
+
+            const addToHistory = (expression) => {
+                if (!expression || expression.trim() === '') return;
+                
+                const newHistory = [expression, ...history.filter(h => h !== expression)].slice(0, 5);
+                setHistory(newHistory);
+                localStorage.setItem('cronHistory', JSON.stringify(newHistory));
+            };
+
+            const handleInputChange = (value) => {
+                setCronExpression(value);
+                if (value.trim()) {
+                    addToHistory(value.trim());
+                }
+            };
+
+            const copyResults = async () => {
+                const results = `Cron式: ${cronExpression}
+説明: ${naturalLanguage}
+タイムゾーン: ${timezone}
+
+次回実行予定:
+${nextExecutions.map(exec => `${exec.index}. ${exec.formatted}`).join('\n')}`;
+
+                try {
+                    await navigator.clipboard.writeText(results);
+                    setToastVisible(true);
+                    setTimeout(() => setToastVisible(false), 1500);
+                } catch (err) {
+                    console.error('コピーに失敗しました:', err);
+                }
+            };
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+                    <div className="max-w-6xl mx-auto p-6">
+                        {React.createElement('div', {
+                            key: 'nav',
+                            className: "mb-4"
+                        }, 
+                            React.createElement('a', {
+                                key: 'back',
+                                href: '/',
+                                className: "inline-flex items-center text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                            }, [
+                                React.createElement('svg', {
+                                    key: 'arrow',
+                                    className: "w-5 h-5 mr-2",
+                                    fill: "none",
+                                    stroke: "currentColor",
+                                    viewBox: "0 0 24 24"
+                                },
+                                    React.createElement('path', {
+                                        strokeLinecap: "round",
+                                        strokeLinejoin: "round",
+                                        strokeWidth: 2,
+                                        d: "M15 19l-7-7 7-7"
+                                    })
+                                ),
+                                'ツール一覧に戻る'
+                            ])
+                        )}
+                        
+                        {/* Header */}
+                        <div className="text-center mb-12">
+                            <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-full mb-4">
+                                <span className="text-2xl">⏰</span>
+                            </div>
+                            <h1 className="text-4xl font-bold text-gray-900 mb-3">
+                                Cron式パーサー & 次回実行表示ツール
+                            </h1>
+                            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                                Cron式を入力して自然言語での説明と次回実行予定を確認できます。
+                            </p>
+                        </div>
+
+                        {/* Input Section */}
+                        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 mb-8">
+                            <div className="flex items-center mb-6">
+                                <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+                                    <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                </div>
+                                <h2 className="text-2xl font-bold text-gray-900">Cron式入力</h2>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                        Cron式
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={cronExpression}
+                                        onChange={(e) => handleInputChange(e.target.value)}
+                                        placeholder="例: 0 3 * * * (毎日3時)"
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white text-gray-900 transition-all text-lg font-mono"
+                                    />
+                                    {error && (
+                                        <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                            <p className="text-sm text-red-600 font-medium">
+                                                {error}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                        タイムゾーン
+                                    </label>
+                                    <select
+                                        value={timezone}
+                                        onChange={(e) => setTimezone(e.target.value)}
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white text-gray-900 transition-all text-lg"
+                                    >
+                                        {timezones.map(tz => (
+                                            <option key={tz} value={tz}>{tz}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Presets */}
+                            <div className="mt-6">
+                                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                    プリセット
+                                </label>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    {presets.map((preset, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => handlePresetClick(preset)}
+                                            className="px-3 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-all duration-200 transform hover:scale-105 text-sm"
+                                        >
+                                            {preset.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Results Section */}
+                        {(naturalLanguage || nextExecutions.length > 0) && (
+                            <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 mb-8">
+                                <div className="flex items-center justify-between mb-6">
+                                    <div className="flex items-center">
+                                        <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                            <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                        <h2 className="text-2xl font-bold text-gray-900">解析結果</h2>
+                                    </div>
+                                    <button
+                                        onClick={copyResults}
+                                        disabled={!naturalLanguage && nextExecutions.length === 0}
+                                        className="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
+                                    >
+                                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                        結果をコピー
+                                    </button>
+                                </div>
+
+                                {naturalLanguage && (
+                                    <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                        <h3 className="text-lg font-semibold text-blue-800 mb-2">自然言語説明</h3>
+                                        <p className="text-blue-700 text-lg">{naturalLanguage}</p>
+                                    </div>
+                                )}
+
+                                {nextExecutions.length > 0 && (
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                                            次回実行予定 ({timezone})
+                                        </h3>
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full">
+                                                <thead>
+                                                    <tr className="border-b-2 border-gray-200">
+                                                        <th className="text-left py-3 px-4 font-bold text-gray-800">#</th>
+                                                        <th className="text-left py-3 px-4 font-bold text-gray-800">実行日時</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {nextExecutions.map(exec => (
+                                                        <tr key={exec.index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                                                            <td className="py-3 px-4 text-gray-900 font-semibold">
+                                                                {exec.index}
+                                                            </td>
+                                                            <td className="py-3 px-4 text-gray-900 font-mono text-lg">
+                                                                {exec.formatted}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* History Section */}
+                        {history.length > 0 && (
+                            <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 mb-8">
+                                <div className="flex items-center mb-6">
+                                    <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                        <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <h2 className="text-2xl font-bold text-gray-900">入力履歴</h2>
+                                </div>
+                                <div className="space-y-2">
+                                    {history.map((item, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => setCronExpression(item)}
+                                            className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors font-mono text-sm"
+                                        >
+                                            {item}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                    </div>
+
+                    {/* Toast Notification */}
+                    {toastVisible && (
+                        <div className="fixed bottom-6 right-6 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl shadow-lg transition-all duration-300 transform translate-y-0">
+                            <div className="flex items-center">
+                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                コピーしました
+                            </div>
+                        </div>
+                    )}
+
+                    <RelatedTools currentTool="cron" />
+                </div>
+            );
+        };
+
+        ReactDOM.render(React.createElement(CronParserTool), document.getElementById('root'));
+    </script>
+</body>
+</html>
