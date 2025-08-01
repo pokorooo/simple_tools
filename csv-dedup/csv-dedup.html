@@ -18,15 +18,10 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-        }
-    </script>
     <script src="/related-tools-config.js"></script>
     <script src="/RelatedTools.js"></script>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900">
+<body class="bg-gray-100 min-h-screen">
     <div id="root"></div>
     
     <script type="text/babel">
@@ -223,15 +218,16 @@
             };
 
             return React.createElement('div', {
-                className: "min-h-screen bg-gradient-to-br from-green-50 to-blue-100 dark:from-gray-900 dark:to-gray-800"
+                className: "max-w-7xl mx-auto p-4 md:p-6"
             }, [
-                // ヘッダー
-                React.createElement('header', {
-                    key: 'header',
-                    className: "bg-white dark:bg-gray-800 shadow-sm"
-                }, 
+                React.createElement('div', {
+                    key: 'layout',
+                    className: "lg:flex lg:gap-6"
+                }, [
+                    // メインコンテンツ
                     React.createElement('div', {
-                        className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
+                        key: 'main-content',
+                        className: "lg:flex-1 bg-white rounded-lg shadow-lg p-6 md:p-8"
                     }, [
                         React.createElement('div', {
                             key: 'nav',
@@ -240,7 +236,7 @@
                             React.createElement('a', {
                                 key: 'back',
                                 href: '/',
-                                className: "inline-flex items-center text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                                className: "inline-flex items-center text-indigo-600 hover:text-indigo-700 transition-colors"
                             }, [
                                 React.createElement('svg', {
                                     key: 'arrow',
@@ -259,9 +255,10 @@
                                 'ツール一覧に戻る'
                             ])
                         ),
+                        
                         React.createElement('h1', {
                             key: 'title',
-                            className: "text-3xl font-bold text-gray-900 dark:text-white text-center"
+                            className: "text-2xl md:text-3xl font-bold text-center mb-8 text-gray-800 bg-white py-4 px-6 rounded-lg"
                         }, [
                             React.createElement('span', {
                                 key: 'icon',
@@ -269,31 +266,20 @@
                             }, '🔄'),
                             'CSV 行の重複削除ツール'
                         ]),
-                        React.createElement('p', {
-                            key: 'subtitle',
-                            className: "text-center text-gray-600 dark:text-gray-300 mt-2"
-                        }, 'CSV データから重複行を削除し、統計情報を表示')
-                    ])
-                ),
-
-                // メイン
-                React.createElement('main', {
-                    key: 'main',
-                    className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
-                }, [
-                    // メインエリア
-                    React.createElement('div', {
-                        key: 'main-area',
-                        className: "grid grid-cols-1 lg:grid-cols-2 gap-8"
-                    }, [
-                        // 入力エリア
+                        
+                        // メインエリア
                         React.createElement('div', {
-                            key: 'input-area',
-                            className: "bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
+                            key: 'main-area',
+                            className: "grid grid-cols-1 lg:grid-cols-2 gap-8"
                         }, [
+                            // 入力エリア
+                            React.createElement('div', {
+                                key: 'input-area',
+                                className: "bg-gray-50 rounded-lg p-6"
+                            }, [
                             React.createElement('h2', {
                                 key: 'input-title',
-                                className: "text-xl font-semibold text-gray-800 dark:text-white mb-6"
+                                className: "text-xl font-semibold text-gray-800 text-gray-800 mb-6"
                             }, '入力'),
 
                             // ファイルアップロード
@@ -303,7 +289,7 @@
                             }, [
                                 React.createElement('label', {
                                     key: 'file-label',
-                                    className: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                                    className: "block text-sm font-medium text-gray-700 text-gray-700 mb-2"
                                 }, 'CSV ファイル'),
                                 React.createElement('div', {
                                     key: 'file-container',
@@ -312,7 +298,7 @@
                                     React.createElement('button', {
                                         key: 'file-button',
                                         onClick: handleFileButtonClick,
-                                        className: "px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 transition-colors"
+                                        className: "px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 bg-indigo-600 hover:bg-indigo-700 transition-colors"
                                     }, 'ファイルを選択'),
                                     React.createElement('input', {
                                         key: 'file-input',
@@ -332,14 +318,14 @@
                             }, [
                                 React.createElement('label', {
                                     key: 'textarea-label',
-                                    className: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                                    className: "block text-sm font-medium text-gray-700 text-gray-700 mb-2"
                                 }, 'または CSV テキストを貼り付け'),
                                 React.createElement('textarea', {
                                     key: 'textarea',
                                     value: inputText,
                                     onChange: handleInputChange,
                                     placeholder: "CSV データを貼り付けるか、上のボタンでファイルを選択してください",
-                                    className: "w-full h-64 p-4 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none font-mono text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white",
+                                    className: "w-full h-64 p-4 border border-gray-300 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none font-mono text-sm bg-white bg-white text-gray-900 text-gray-800",
                                     spellCheck: false
                                 })
                             ]),
@@ -351,7 +337,7 @@
                             }, [
                                 React.createElement('h3', {
                                     key: 'options-title',
-                                    className: "text-lg font-medium text-gray-800 dark:text-white mb-4"
+                                    className: "text-lg font-medium text-gray-800 text-gray-800 mb-4"
                                 }, 'オプション'),
                                 React.createElement('div', {
                                     key: 'options-grid',
@@ -366,11 +352,11 @@
                                             type: "checkbox",
                                             checked: hasHeader,
                                             onChange: (e) => handleOptionChange(setHasHeader, e.target.checked),
-                                            className: "w-4 h-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500"
+                                            className: "w-4 h-4 text-indigo-600 border-gray-300 border-gray-300 rounded focus:ring-indigo-500"
                                         }),
                                         React.createElement('span', {
                                             key: 'header-label',
-                                            className: "text-sm text-gray-700 dark:text-gray-300"
+                                            className: "text-sm text-gray-700 text-gray-700"
                                         }, 'ヘッダー行を含む')
                                     ]),
                                     React.createElement('label', {
@@ -382,11 +368,11 @@
                                             type: "checkbox",
                                             checked: ignoreCase,
                                             onChange: (e) => handleOptionChange(setIgnoreCase, e.target.checked),
-                                            className: "w-4 h-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500"
+                                            className: "w-4 h-4 text-indigo-600 border-gray-300 border-gray-300 rounded focus:ring-indigo-500"
                                         }),
                                         React.createElement('span', {
                                             key: 'case-label',
-                                            className: "text-sm text-gray-700 dark:text-gray-300"
+                                            className: "text-sm text-gray-700 text-gray-700"
                                         }, '大文字小文字を無視')
                                     ]),
                                     React.createElement('label', {
@@ -398,11 +384,11 @@
                                             type: "checkbox",
                                             checked: trimWhitespace,
                                             onChange: (e) => handleOptionChange(setTrimWhitespace, e.target.checked),
-                                            className: "w-4 h-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500"
+                                            className: "w-4 h-4 text-indigo-600 border-gray-300 border-gray-300 rounded focus:ring-indigo-500"
                                         }),
                                         React.createElement('span', {
                                             key: 'trim-label',
-                                            className: "text-sm text-gray-700 dark:text-gray-300"
+                                            className: "text-sm text-gray-700 text-gray-700"
                                         }, '先頭・末尾空白を無視')
                                     ])
                                 ])
@@ -411,29 +397,29 @@
                             // エラー表示
                             error && React.createElement('div', {
                                 key: 'error',
-                                className: "mb-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 rounded-lg text-sm"
+                                className: "mb-4 p-3 bg-red-100 bg-red-100 border border-red-300 border-red-300 text-red-700 text-red-700 rounded-lg text-sm"
                             }, error),
 
                             // クリアボタン
                             React.createElement('button', {
                                 key: 'clear-btn',
                                 onClick: handleClear,
-                                className: "w-full px-4 py-2 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
+                                className: "w-full px-4 py-2 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 bg-white hover:bg-gray-500 transition-colors"
                             }, 'クリア')
                         ]),
 
-                        // 結果エリア
-                        React.createElement('div', {
-                            key: 'result-area',
-                            className: "bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
-                        }, [
+                            // 結果エリア
+                            React.createElement('div', {
+                                key: 'result-area',
+                                className: "bg-gray-50 rounded-lg p-6"
+                            }, [
                             React.createElement('div', {
                                 key: 'result-header',
                                 className: "flex items-center justify-between mb-6"
                             }, [
                                 React.createElement('h2', {
                                     key: 'result-title',
-                                    className: "text-xl font-semibold text-gray-800 dark:text-white"
+                                    className: "text-xl font-semibold text-gray-800"
                                 }, '結果'),
                                 outputText && React.createElement('div', {
                                     key: 'action-buttons',
@@ -442,12 +428,12 @@
                                     React.createElement('button', {
                                         key: 'copy-btn',
                                         onClick: handleCopy,
-                                        className: "px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 transition-colors"
+                                        className: "px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
                                     }, 'コピー'),
                                     React.createElement('button', {
                                         key: 'download-btn',
                                         onClick: handleDownload,
-                                        className: "px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors"
+                                        className: "px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
                                     }, 'ダウンロード')
                                 ])
                             ]),
@@ -462,7 +448,7 @@
                                     value: outputText,
                                     readOnly: true,
                                     placeholder: "重複削除された CSV データがここに表示されます",
-                                    className: "w-full h-64 p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 resize-none font-mono text-sm text-gray-900 dark:text-white",
+                                    className: "w-full h-64 p-4 border border-gray-300 border-gray-300 rounded-lg bg-gray-50 bg-gray-100 resize-none font-mono text-sm text-gray-900 text-gray-800",
                                     spellCheck: false
                                 })
                             ),
@@ -470,11 +456,11 @@
                             // 統計情報
                             (statistics.totalRows > 0 || statistics.uniqueRows > 0) && React.createElement('div', {
                                 key: 'statistics',
-                                className: "bg-gray-100 dark:bg-gray-700 rounded-lg p-4"
+                                className: "bg-gray-100 bg-white rounded-lg p-4"
                             }, [
                                 React.createElement('h3', {
                                     key: 'stats-title',
-                                    className: "text-sm font-medium text-gray-800 dark:text-white mb-3"
+                                    className: "text-sm font-medium text-gray-800 text-gray-800 mb-3"
                                 }, '統計情報'),
                                 React.createElement('div', {
                                     key: 'stats-grid',
@@ -486,11 +472,11 @@
                                     }, [
                                         React.createElement('div', {
                                             key: 'total-value',
-                                            className: "text-2xl font-bold text-blue-600 dark:text-blue-400"
+                                            className: "text-2xl font-bold text-blue-600 text-blue-600"
                                         }, statistics.totalRows.toLocaleString()),
                                         React.createElement('div', {
                                             key: 'total-label',
-                                            className: "text-gray-600 dark:text-gray-300"
+                                            className: "text-gray-600 text-gray-700"
                                         }, '入力行数')
                                     ]),
                                     React.createElement('div', {
@@ -499,11 +485,11 @@
                                     }, [
                                         React.createElement('div', {
                                             key: 'unique-value',
-                                            className: "text-2xl font-bold text-green-600 dark:text-green-400"
+                                            className: "text-2xl font-bold text-green-600 text-green-600"
                                         }, statistics.uniqueRows.toLocaleString()),
                                         React.createElement('div', {
                                             key: 'unique-label',
-                                            className: "text-gray-600 dark:text-gray-300"
+                                            className: "text-gray-600 text-gray-700"
                                         }, 'ユニーク行数')
                                     ]),
                                     React.createElement('div', {
@@ -512,27 +498,45 @@
                                     }, [
                                         React.createElement('div', {
                                             key: 'removed-value',
-                                            className: "text-2xl font-bold text-red-600 dark:text-red-400"
+                                            className: "text-2xl font-bold text-red-600 text-red-600"
                                         }, statistics.duplicatesRemoved.toLocaleString()),
                                         React.createElement('div', {
                                             key: 'removed-label',
-                                            className: "text-gray-600 dark:text-gray-300"
+                                            className: "text-gray-600 text-gray-700"
                                         }, '削除行数')
                                     ])
                                 ])
                             ])
-                        ])
-                    ])
-                ]),
+                            ])
+                        ]),
 
-                // 関連ツール
-                React.createElement(RelatedTools, { key: 'related-tools', currentSlug: 'csv-dedup' }),
+                        // サイドバー (デスクトップ)
+                        React.createElement('div', {
+                            key: 'sidebar',
+                            className: "hidden lg:block w-80 bg-white rounded-lg shadow-lg p-6"
+                        },
+                            React.createElement(RelatedTools, { currentTool: 'csv-dedup', variant: 'sidebar' })
+                        )
+                    ]),
+                    
+                    // 関連ツール (モバイル)
+                    React.createElement('div', {
+                        key: 'mobile-related',
+                        className: "lg:hidden mt-6"
+                    },
+                        React.createElement('div', {
+                            className: "bg-white rounded-lg shadow-lg p-6"
+                        },
+                            React.createElement(RelatedTools, { currentTool: 'csv-dedup' })
+                        )
+                    ),
 
-                // トーストメッセージ
-                copyMessage && React.createElement('div', {
-                    key: 'toast',
-                    className: "fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50"
-                }, copyMessage)
+                    // トーストメッセージ
+                    copyMessage && React.createElement('div', {
+                        key: 'toast',
+                        className: "fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50"
+                    }, copyMessage)
+                ])
             ]);
         };
 

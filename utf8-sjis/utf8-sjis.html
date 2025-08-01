@@ -18,15 +18,10 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/encoding-japanese@2.0.0/encoding.min.js"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-        }
-    </script>
     <script src="/related-tools-config.js"></script>
     <script src="/RelatedTools.js"></script>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900">
+<body class="bg-gray-100 min-h-screen">
     <div id="root"></div>
     
     <script type="text/babel">
@@ -240,16 +235,18 @@
             }, [inputText, mode, error]);
 
             return React.createElement('div', {
-                className: "min-h-screen bg-gradient-to-br from-green-50 to-teal-100 dark:from-gray-900 dark:to-gray-800"
+                className: "max-w-7xl mx-auto p-4 md:p-6"
             }, [
-                // ヘッダー
-                React.createElement('header', {
-                    key: 'header',
-                    className: "bg-white dark:bg-gray-800 shadow-sm"
-                }, 
+                React.createElement('div', {
+                    key: 'main-layout',
+                    className: "lg:flex lg:gap-6"
+                }, [
+                    // メインコンテンツ
                     React.createElement('div', {
-                        className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
+                        key: 'main-content',
+                        className: "lg:flex-1 bg-white rounded-lg shadow-lg p-6 md:p-8"
                     }, [
+                        // ナビゲーション
                         React.createElement('div', {
                             key: 'nav',
                             className: "mb-4"
@@ -257,7 +254,7 @@
                             React.createElement('a', {
                                 key: 'back',
                                 href: '/',
-                                className: "inline-flex items-center text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                                className: "inline-flex items-center text-indigo-600 hover:text-indigo-700 transition-colors"
                             }, [
                                 React.createElement('svg', {
                                     key: 'arrow',
@@ -276,9 +273,11 @@
                                 'ツール一覧に戻る'
                             ])
                         ),
+
+                        // タイトル
                         React.createElement('h1', {
                             key: 'title',
-                            className: "text-3xl font-bold text-gray-900 dark:text-white text-center"
+                            className: "text-2xl md:text-3xl font-bold text-center mb-8 text-gray-800 bg-white py-4 px-6 rounded-lg"
                         }, [
                             React.createElement('span', {
                                 key: 'icon',
@@ -286,271 +285,285 @@
                             }, '🔤'),
                             'UTF-8 ⇄ Shift_JIS 変換ツール'
                         ]),
-                        React.createElement('p', {
-                            key: 'subtitle',
-                            className: "text-center text-gray-600 dark:text-gray-300 mt-2"
-                        }, '文字エンコーディングを相互変換')
-                    ])
-                ),
-
-                // メイン
-                React.createElement('main', {
-                    key: 'main',
-                    className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
-                }, [
-                    // モード切替
-                    React.createElement('div', {
-                        key: 'mode-toggle',
-                        className: "bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-8"
-                    }, [
-                        React.createElement('h2', {
-                            key: 'mode-title',
-                            className: "text-xl font-semibold text-gray-800 dark:text-white mb-4"
-                        }, '変換モード'),
+                        // モード切替
                         React.createElement('div', {
-                            key: 'mode-options',
-                            className: "flex flex-col sm:flex-row gap-4"
+                            key: 'mode-toggle',
+                            className: "bg-gray-50 rounded-lg p-6 mb-8"
                         }, [
-                            React.createElement('label', {
-                                key: 'utf8-to-sjis',
-                                className: "flex items-center space-x-3 cursor-pointer"
-                            }, [
-                                React.createElement('input', {
-                                    key: 'radio1',
-                                    type: 'radio',
-                                    name: 'mode',
-                                    value: 'utf8-to-sjis',
-                                    checked: mode === 'utf8-to-sjis',
-                                    onChange: (e) => handleModeChange(e.target.value),
-                                    className: "w-4 h-4 text-indigo-600 border-gray-300 dark:border-gray-600 focus:ring-indigo-500"
-                                }),
-                                React.createElement('span', {
-                                    key: 'label1',
-                                    className: "text-sm font-medium text-gray-700 dark:text-gray-300"
-                                }, 'UTF-8 → Shift_JIS')
-                            ]),
-                            React.createElement('label', {
-                                key: 'sjis-to-utf8',
-                                className: "flex items-center space-x-3 cursor-pointer"
-                            }, [
-                                React.createElement('input', {
-                                    key: 'radio2',
-                                    type: 'radio',
-                                    name: 'mode',
-                                    value: 'sjis-to-utf8',
-                                    checked: mode === 'sjis-to-utf8',
-                                    onChange: (e) => handleModeChange(e.target.value),
-                                    className: "w-4 h-4 text-indigo-600 border-gray-300 dark:border-gray-600 focus:ring-indigo-500"
-                                }),
-                                React.createElement('span', {
-                                    key: 'label2',
-                                    className: "text-sm font-medium text-gray-700 dark:text-gray-300"
-                                }, 'Shift_JIS → UTF-8')
-                            ])
-                        ])
-                    ]),
-
-                    // メインエリア
-                    React.createElement('div', {
-                        key: 'main-area',
-                        className: "grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8"
-                    }, [
-                        // 入力エリア
-                        React.createElement('div', {
-                            key: 'input-area',
-                            className: "bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
-                        }, [
+                            React.createElement('h2', {
+                                key: 'mode-title',
+                                className: "text-xl font-semibold text-gray-800 mb-4"
+                            }, '変換モード'),
                             React.createElement('div', {
-                                key: 'input-header',
-                                className: "flex items-center justify-between mb-4"
-                            }, [
-                                React.createElement('h2', {
-                                    key: 'input-title',
-                                    className: "text-xl font-semibold text-gray-800 dark:text-white"
-                                }, '入力'),
-                                React.createElement('button', {
-                                    key: 'clear-btn',
-                                    onClick: handleClear,
-                                    className: "px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
-                                }, 'クリア')
-                            ]),
-
-                            // ファイルアップロード
-                            React.createElement('div', {
-                                key: 'file-upload',
-                                className: "mb-4"
+                                key: 'mode-options',
+                                className: "flex flex-col sm:flex-row gap-4"
                             }, [
                                 React.createElement('label', {
-                                    key: 'file-label',
-                                    className: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                                }, 'ファイルアップロード'),
-                                React.createElement('input', {
-                                    key: 'file-input',
-                                    ref: fileInputRef,
-                                    type: 'file',
-                                    accept: '.txt',
-                                    onChange: handleFileUpload,
-                                    className: "block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-900 dark:file:text-indigo-300"
-                                })
-                            ]),
-
-                            React.createElement('textarea', {
-                                key: 'input-textarea',
-                                value: inputText,
-                                onChange: (e) => setInputText(e.target.value),
-                                placeholder: "ここにテキストを入力してください",
-                                className: "w-full h-64 p-4 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white",
-                                spellCheck: false
-                            }),
-
-                            React.createElement('p', {
-                                key: 'size-info',
-                                className: "text-xs text-gray-500 dark:text-gray-400 mt-2"
-                            }, `最大 ${MAX_SIZE / 1024}KB`)
+                                    key: 'utf8-to-sjis',
+                                    className: "flex items-center space-x-3 cursor-pointer"
+                                }, [
+                                    React.createElement('input', {
+                                        key: 'radio1',
+                                        type: 'radio',
+                                        name: 'mode',
+                                        value: 'utf8-to-sjis',
+                                        checked: mode === 'utf8-to-sjis',
+                                        onChange: (e) => handleModeChange(e.target.value),
+                                        className: "w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                                    }),
+                                    React.createElement('span', {
+                                        key: 'label1',
+                                        className: "text-sm font-medium text-gray-700"
+                                    }, 'UTF-8 → Shift_JIS')
+                                ]),
+                                React.createElement('label', {
+                                    key: 'sjis-to-utf8',
+                                    className: "flex items-center space-x-3 cursor-pointer"
+                                }, [
+                                    React.createElement('input', {
+                                        key: 'radio2',
+                                        type: 'radio',
+                                        name: 'mode',
+                                        value: 'sjis-to-utf8',
+                                        checked: mode === 'sjis-to-utf8',
+                                        onChange: (e) => handleModeChange(e.target.value),
+                                        className: "w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                                    }),
+                                    React.createElement('span', {
+                                        key: 'label2',
+                                        className: "text-sm font-medium text-gray-700"
+                                    }, 'Shift_JIS → UTF-8')
+                                ])
+                            ])
                         ]),
 
-                        // 出力エリア
+                        // メインエリア
                         React.createElement('div', {
-                            key: 'output-area',
-                            className: "bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
+                            key: 'main-area',
+                            className: "grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8"
                         }, [
+                            // 入力エリア
                             React.createElement('div', {
-                                key: 'output-header',
-                                className: "flex items-center justify-between mb-4"
+                                key: 'input-area',
+                                className: "bg-gray-50 rounded-lg p-6"
                             }, [
-                                React.createElement('h2', {
-                                    key: 'output-title',
-                                    className: "text-xl font-semibold text-gray-800 dark:text-white"
-                                }, '結果'),
-                                outputText && React.createElement('div', {
-                                    key: 'action-buttons',
-                                    className: "flex gap-2"
-                                }, [
-                                    React.createElement('button', {
-                                        key: 'copy-btn',
-                                        onClick: handleCopy,
-                                        className: "px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 transition-colors"
-                                    }, 'コピー'),
-                                    React.createElement('button', {
-                                        key: 'download-btn',
-                                        onClick: handleDownload,
-                                        className: "px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors"
-                                    }, 'ダウンロード')
-                                ])
-                            ]),
-
-                            React.createElement('textarea', {
-                                key: 'output-textarea',
-                                value: outputText,
-                                readOnly: true,
-                                placeholder: "変換結果がここに表示されます",
-                                className: "w-full h-64 p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 resize-none text-gray-900 dark:text-white",
-                                spellCheck: false
-                            })
-                        ])
-                    ]),
-
-                    // エラー表示
-                    error && React.createElement('div', {
-                        key: 'error',
-                        className: "mb-6 p-4 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 rounded-lg"
-                    }, error),
-
-                    // 履歴セクション
-                    history.length > 0 && React.createElement('div', {
-                        key: 'history-section',
-                        className: "bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-8"
-                    }, [
-                        React.createElement('h2', {
-                            key: 'history-title',
-                            className: "text-xl font-semibold text-gray-800 dark:text-white mb-4"
-                        }, '履歴（最新3件）'),
-                        React.createElement('div', {
-                            key: 'history-grid',
-                            className: "grid grid-cols-1 sm:grid-cols-3 gap-4"
-                        },
-                            history.map((item, index) =>
                                 React.createElement('div', {
-                                    key: index,
-                                    onClick: () => loadFromHistory(item),
-                                    className: "p-4 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                    key: 'input-header',
+                                    className: "flex items-center justify-between mb-4"
                                 }, [
-                                    React.createElement('div', {
-                                        key: 'hist-mode',
-                                        className: "text-xs text-indigo-600 dark:text-indigo-400 font-medium mb-2"
-                                    }, item.mode === 'utf8-to-sjis' ? 'UTF-8 → Shift_JIS' : 'Shift_JIS → UTF-8'),
-                                    React.createElement('div', {
-                                        key: 'hist-text',
-                                        className: "text-sm text-gray-800 dark:text-white mb-2 break-all"
-                                    }, item.text),
-                                    React.createElement('div', {
-                                        key: 'hist-time',
-                                        className: "text-xs text-gray-500 dark:text-gray-400"
-                                    }, new Date(item.timestamp).toLocaleString())
-                                ])
-                            )
-                        )
-                    ]),
+                                    React.createElement('h2', {
+                                        key: 'input-title',
+                                        className: "text-xl font-semibold text-gray-800"
+                                    }, '入力'),
+                                    React.createElement('button', {
+                                        key: 'clear-btn',
+                                        onClick: handleClear,
+                                        className: "px-3 py-1 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded hover:border-gray-400 transition-colors"
+                                    }, 'クリア')
+                                ]),
 
-                    // 使い方説明
-                    React.createElement('div', {
-                        key: 'help-section',
-                        className: "bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
-                    }, [
-                        React.createElement('h2', {
-                            key: 'help-title',
-                            className: "text-xl font-semibold text-gray-800 dark:text-white mb-4"
-                        }, '使い方'),
-                        React.createElement('div', {
-                            key: 'help-content',
-                            className: "grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-600 dark:text-gray-300"
-                        }, [
-                            React.createElement('div', {
-                                key: 'help-basic'
-                            }, [
-                                React.createElement('h3', {
-                                    key: 'basic-title',
-                                    className: "font-medium text-gray-800 dark:text-white mb-2"
-                                }, '基本操作'),
-                                React.createElement('ul', {
-                                    key: 'basic-list',
-                                    className: "space-y-1"
+                                // ファイルアップロード
+                                React.createElement('div', {
+                                    key: 'file-upload',
+                                    className: "mb-4"
                                 }, [
-                                    React.createElement('li', { key: 'b1' }, '1. 変換モードを選択'),
-                                    React.createElement('li', { key: 'b2' }, '2. テキスト入力またはファイルアップロード'),
-                                    React.createElement('li', { key: 'b3' }, '3. 自動的に変換結果が表示'),
-                                    React.createElement('li', { key: 'b4' }, '4. コピーまたはダウンロードで取得')
-                                ])
+                                    React.createElement('label', {
+                                        key: 'file-label',
+                                        className: "block text-sm font-medium text-gray-700 mb-2"
+                                    }, 'ファイルアップロード'),
+                                    React.createElement('input', {
+                                        key: 'file-input',
+                                        ref: fileInputRef,
+                                        type: 'file',
+                                        accept: '.txt',
+                                        onChange: handleFileUpload,
+                                        className: "block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                    })
+                                ]),
+
+                                React.createElement('textarea', {
+                                    key: 'input-textarea',
+                                    value: inputText,
+                                    onChange: (e) => setInputText(e.target.value),
+                                    placeholder: "ここにテキストを入力してください",
+                                    className: "w-full h-64 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none bg-white text-gray-900",
+                                    spellCheck: false
+                                }),
+
+                                React.createElement('p', {
+                                    key: 'size-info',
+                                    className: "text-xs text-gray-500 mt-2"
+                                }, `最大 ${MAX_SIZE / 1024}KB`)
                             ]),
+
+                            // 出力エリア
                             React.createElement('div', {
-                                key: 'help-encoding'
+                                key: 'output-area',
+                                className: "bg-gray-50 rounded-lg p-6"
                             }, [
-                                React.createElement('h3', {
-                                    key: 'encoding-title',
-                                    className: "font-medium text-gray-800 dark:text-white mb-2"
-                                }, '文字エンコーディング'),
-                                React.createElement('ul', {
-                                    key: 'encoding-list',
-                                    className: "space-y-1"
+                                React.createElement('div', {
+                                    key: 'output-header',
+                                    className: "flex items-center justify-between mb-4"
                                 }, [
-                                    React.createElement('li', { key: 'e1' }, 'UTF-8: Unicode文字エンコーディング'),
-                                    React.createElement('li', { key: 'e2' }, 'Shift_JIS: 日本語文字エンコーディング'),
-                                    React.createElement('li', { key: 'e3' }, '対応ファイル: .txt（最大500KB）'),
-                                    React.createElement('li', { key: 'e4' }, '履歴: 最新3件を自動保存')
+                                    React.createElement('h2', {
+                                        key: 'output-title',
+                                        className: "text-xl font-semibold text-gray-800"
+                                    }, '結果'),
+                                    outputText && React.createElement('div', {
+                                        key: 'action-buttons',
+                                        className: "flex gap-2"
+                                    }, [
+                                        React.createElement('button', {
+                                            key: 'copy-btn',
+                                            onClick: handleCopy,
+                                            className: "px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
+                                        }, 'コピー'),
+                                        React.createElement('button', {
+                                            key: 'download-btn',
+                                            onClick: handleDownload,
+                                            className: "px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                                        }, 'ダウンロード')
+                                    ])
+                                ]),
+
+                                React.createElement('textarea', {
+                                    key: 'output-textarea',
+                                    value: outputText,
+                                    readOnly: true,
+                                    placeholder: "変換結果がここに表示されます",
+                                    className: "w-full h-64 p-4 border border-gray-300 rounded-lg bg-white resize-none text-gray-900",
+                                    spellCheck: false
+                                })
+                            ])
+                        ]),
+
+                        // エラー表示
+                        error && React.createElement('div', {
+                            key: 'error',
+                            className: "mb-6 p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg"
+                        }, error),
+
+                        // 履歴セクション
+                        history.length > 0 && React.createElement('div', {
+                            key: 'history-section',
+                            className: "bg-gray-50 rounded-lg p-6 mb-8"
+                        }, [
+                            React.createElement('h2', {
+                                key: 'history-title',
+                                className: "text-xl font-semibold text-gray-800 mb-4"
+                            }, '履歴（最新3件）'),
+                            React.createElement('div', {
+                                key: 'history-grid',
+                                className: "grid grid-cols-1 sm:grid-cols-3 gap-4"
+                            },
+                                history.map((item, index) =>
+                                    React.createElement('div', {
+                                        key: index,
+                                        onClick: () => loadFromHistory(item),
+                                        className: "p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors bg-white"
+                                    }, [
+                                        React.createElement('div', {
+                                            key: 'hist-mode',
+                                            className: "text-xs text-indigo-600 font-medium mb-2"
+                                        }, item.mode === 'utf8-to-sjis' ? 'UTF-8 → Shift_JIS' : 'Shift_JIS → UTF-8'),
+                                        React.createElement('div', {
+                                            key: 'hist-text',
+                                            className: "text-sm text-gray-800 mb-2 break-all"
+                                        }, item.text),
+                                        React.createElement('div', {
+                                            key: 'hist-time',
+                                            className: "text-xs text-gray-500"
+                                        }, new Date(item.timestamp).toLocaleString())
+                                    ])
+                                )
+                            )
+                        ]),
+
+                        // 使い方説明
+                        React.createElement('div', {
+                            key: 'help-section',
+                            className: "bg-gray-50 rounded-lg p-6"
+                        }, [
+                            React.createElement('h2', {
+                                key: 'help-title',
+                                className: "text-xl font-semibold text-gray-800 mb-4"
+                            }, '使い方'),
+                            React.createElement('div', {
+                                key: 'help-content',
+                                className: "grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-600"
+                            }, [
+                                React.createElement('div', {
+                                    key: 'help-basic'
+                                }, [
+                                    React.createElement('h3', {
+                                        key: 'basic-title',
+                                        className: "font-medium text-gray-800 mb-2"
+                                    }, '基本操作'),
+                                    React.createElement('ul', {
+                                        key: 'basic-list',
+                                        className: "space-y-1"
+                                    }, [
+                                        React.createElement('li', { key: 'b1' }, '1. 変換モードを選択'),
+                                        React.createElement('li', { key: 'b2' }, '2. テキスト入力またはファイルアップロード'),
+                                        React.createElement('li', { key: 'b3' }, '3. 自動的に変換結果が表示'),
+                                        React.createElement('li', { key: 'b4' }, '4. コピーまたはダウンロードで取得')
+                                    ])
+                                ]),
+                                React.createElement('div', {
+                                    key: 'help-encoding'
+                                }, [
+                                    React.createElement('h3', {
+                                        key: 'encoding-title',
+                                        className: "font-medium text-gray-800 mb-2"
+                                    }, '文字エンコーディング'),
+                                    React.createElement('ul', {
+                                        key: 'encoding-list',
+                                        className: "space-y-1"
+                                    }, [
+                                        React.createElement('li', { key: 'e1' }, 'UTF-8: Unicode文字エンコーディング'),
+                                        React.createElement('li', { key: 'e2' }, 'Shift_JIS: 日本語文字エンコーディング'),
+                                        React.createElement('li', { key: 'e3' }, '対応ファイル: .txt（最大500KB）'),
+                                        React.createElement('li', { key: 'e4' }, '履歴: 最新3件を自動保存')
+                                    ])
                                 ])
                             ])
                         ])
-                    ])
+                    ]),
+
+                    // サイドバー (デスクトップ)
+                    React.createElement('div', {
+                        key: 'sidebar',
+                        className: "hidden lg:block w-80 bg-white rounded-lg shadow-lg p-6"
+                    }, 
+                        React.createElement(RelatedTools, { 
+                            key: 'sidebar-tools', 
+                            currentTool: 'utf8-sjis', 
+                            variant: 'sidebar' 
+                        })
+                    )
                 ]),
+
+                // 関連ツール (モバイル)
+                React.createElement('div', {
+                    key: 'mobile-tools',
+                    className: "lg:hidden mt-6"
+                }, 
+                    React.createElement('div', {
+                        key: 'mobile-tools-container',
+                        className: "bg-white rounded-lg shadow-lg p-6"
+                    }, 
+                        React.createElement(RelatedTools, { 
+                            key: 'mobile-tools-component', 
+                            currentTool: 'utf8-sjis' 
+                        })
+                    )
+                ),
 
                 // トーストメッセージ
                 copyMessage && React.createElement('div', {
                     key: 'toast',
                     className: "fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50"
-                }, copyMessage),
-
-                // 関連ツール
-                React.createElement(RelatedTools, { key: 'related-tools', currentSlug: 'utf8-sjis' })
+                }, copyMessage)
             ]);
         };
 

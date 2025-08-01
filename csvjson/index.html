@@ -154,34 +154,37 @@
             };
 
             return (
-                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-                    <div className="max-w-7xl mx-auto p-6">
-                        {React.createElement('div', {
-                            key: 'nav',
-                            className: "mb-4"
-                        }, 
-                            React.createElement('a', {
-                                key: 'back',
-                                href: '/',
-                                className: "inline-flex items-center text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
-                            }, [
-                                React.createElement('svg', {
-                                    key: 'arrow',
-                                    className: "w-5 h-5 mr-2",
-                                    fill: "none",
-                                    stroke: "currentColor",
-                                    viewBox: "0 0 24 24"
-                                },
-                                    React.createElement('path', {
-                                        strokeLinecap: "round",
-                                        strokeLinejoin: "round",
-                                        strokeWidth: 2,
-                                        d: "M15 19l-7-7 7-7"
-                                    })
-                                ),
-                                'ツール一覧に戻る'
-                            ])
-                        )}
+                <div className="bg-gray-100 min-h-screen">
+                    <div className="max-w-7xl mx-auto p-4 md:p-6">
+                        <div className="lg:flex lg:gap-6">
+                            {/* メインコンテンツ */}
+                            <div className="lg:flex-1 bg-white rounded-lg shadow-lg p-6 md:p-8">
+                            {React.createElement('div', {
+                                key: 'nav',
+                                className: "mb-4"
+                            }, 
+                                React.createElement('a', {
+                                    key: 'back',
+                                    href: '/',
+                                    className: "inline-flex items-center text-indigo-600 hover:text-indigo-700 transition-colors"
+                                }, [
+                                    React.createElement('svg', {
+                                        key: 'arrow',
+                                        className: "w-5 h-5 mr-2",
+                                        fill: "none",
+                                        stroke: "currentColor",
+                                        viewBox: "0 0 24 24"
+                                    },
+                                        React.createElement('path', {
+                                            strokeLinecap: "round",
+                                            strokeLinejoin: "round",
+                                            strokeWidth: 2,
+                                            d: "M15 19l-7-7 7-7"
+                                        })
+                                    ),
+                                    'ツール一覧に戻る'
+                                ])
+                            )}
                         
                         {/* Header */}
                         <div className="text-center mb-12">
@@ -386,6 +389,20 @@
                             </div>
                         </div>
 
+                            </div>
+                        
+                            {/* サイドバー (デスクトップ) */}
+                            <div className="hidden lg:block w-80 bg-white rounded-lg shadow-lg p-6">
+                                <RelatedTools currentTool="csvjson" variant="sidebar" />
+                            </div>
+                        </div>
+                        
+                        {/* 関連ツール (モバイル) */}
+                        <div className="lg:hidden mt-6">
+                            <div className="bg-white rounded-lg shadow-lg p-6">
+                                <RelatedTools currentTool="csvjson" />
+                            </div>
+                        </div>
                     </div>
 
                     {/* Toast Notification */}
@@ -399,8 +416,6 @@
                             </div>
                         </div>
                     )}
-
-                    <RelatedTools currentTool="csvjson" />
                 </div>
             );
         };

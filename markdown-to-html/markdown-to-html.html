@@ -21,7 +21,7 @@
     <script src="/related-tools-config.js"></script>
     <script src="/RelatedTools.js"></script>
 </head>
-<body>
+<body class="bg-gray-100 min-h-screen">
     <div id="root"></div>
     
     <script type="text/babel">
@@ -99,25 +99,19 @@ console.log("Hello, World!");
                 setMarkdown(sampleMarkdown);
             };
 
-            return React.createElement('div', {
-                className: "min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100"
-            }, [
-                // ヘッダー
-                React.createElement('header', {
-                    key: 'header',
-                    className: "bg-white shadow-sm"
-                }, 
-                    React.createElement('div', {
-                        className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
-                    }, [
-                        React.createElement('div', {
+            return (
+                <div className="max-w-7xl mx-auto p-4 md:p-6">
+                    <div className="lg:flex lg:gap-6">
+                        {/* メインコンテンツ */}
+                        <div className="lg:flex-1 bg-white rounded-lg shadow-lg p-6 md:p-8">
+                        {React.createElement('div', {
                             key: 'nav',
                             className: "mb-4"
                         }, 
                             React.createElement('a', {
                                 key: 'back',
                                 href: '/',
-                                className: "inline-flex items-center text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                                className: "inline-flex items-center text-indigo-600 hover:text-indigo-700 transition-colors"
                             }, [
                                 React.createElement('svg', {
                                     key: 'arrow',
@@ -135,183 +129,114 @@ console.log("Hello, World!");
                                 ),
                                 'ツール一覧に戻る'
                             ])
-                        ),
-                        React.createElement('h1', {
-                            key: 'title',
-                            className: "text-3xl font-bold text-gray-900 text-center"
-                        }, [
-                            React.createElement('span', {
-                                key: 'icon',
-                                className: "mr-3"
-                            }, '📝'),
-                            'Markdown → HTML変換ツール'
-                        ]),
-                        React.createElement('p', {
-                            key: 'subtitle',
-                            className: "text-center text-gray-600 mt-2"
-                        }, 'MarkdownをHTMLコードに変換')
-                    ])
-                ),
+                        )}
+                        
+                        <h1 className="text-2xl md:text-3xl font-bold text-center mb-8 text-gray-800 bg-white py-4 px-6 rounded-lg">
+                            Markdown → HTML変換ツール
+                        </h1>
+                        {/* コントロールボタン */}
+                        <div className="flex flex-wrap justify-center gap-4 mb-6">
+                            <button
+                                onClick={handleLoadSample}
+                                className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                            >
+                                サンプルを読み込む
+                            </button>
+                            <button
+                                onClick={handleClear}
+                                className="px-4 py-2 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition-colors duration-200"
+                            >
+                                クリア
+                            </button>
+                        </div>
 
-                // メイン
-                React.createElement('main', {
-                    key: 'main',
-                    className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
-                }, [
-                    // コントロールボタン
-                    React.createElement('div', {
-                        key: 'controls',
-                        className: "flex flex-wrap justify-center gap-4 mb-6"
-                    }, [
-                        React.createElement('button', {
-                            key: 'sample-btn',
-                            onClick: handleLoadSample,
-                            className: "px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200"
-                        }, 'サンプルを読み込む'),
-                        React.createElement('button', {
-                            key: 'clear-btn',
-                            onClick: handleClear,
-                            className: "px-4 py-2 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition-colors duration-200"
-                        }, 'クリア')
-                    ]),
+                        {/* 変換エリア */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* Markdown入力エリア */}
+                            <div className="bg-gray-50 rounded-lg p-6">
+                                <h2 className="text-xl font-semibold text-gray-700 mb-4">Markdown入力</h2>
+                                <textarea
+                                    value={markdown}
+                                    onChange={(e) => setMarkdown(e.target.value)}
+                                    placeholder="ここにMarkdownを入力してください"
+                                    className="w-full h-96 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none font-mono text-sm"
+                                    spellCheck={false}
+                                />
+                            </div>
 
-                    // 変換エリア
-                    React.createElement('div', {
-                        key: 'converter',
-                        className: "grid grid-cols-1 lg:grid-cols-2 gap-6"
-                    }, [
-                        // Markdown入力エリア
-                        React.createElement('div', {
-                            key: 'input-area',
-                            className: "bg-white rounded-lg shadow-sm p-6"
-                        }, [
-                            React.createElement('h2', {
-                                key: 'input-title',
-                                className: "text-xl font-semibold text-gray-700 mb-4"
-                            }, 'Markdown入力'),
-                            React.createElement('textarea', {
-                                key: 'input-textarea',
-                                value: markdown,
-                                onChange: (e) => setMarkdown(e.target.value),
-                                placeholder: "ここにMarkdownを入力してください",
-                                className: "w-full h-96 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none font-mono text-sm",
-                                spellCheck: false
-                            })
-                        ]),
+                            {/* HTML出力エリア */}
+                            <div className="bg-gray-50 rounded-lg p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-xl font-semibold text-gray-700">変換されたHTML</h2>
+                                    {html && (
+                                        <button
+                                            onClick={handleCopy}
+                                            className="px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center gap-2"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                            </svg>
+                                            コピー
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="h-96 border border-gray-300 rounded-lg overflow-auto">
+                                    <pre className="p-4 text-sm font-mono bg-gray-50 whitespace-pre-wrap break-words h-full">
+                                        <code>{html || '変換されたHTMLがここに表示されます'}</code>
+                                    </pre>
+                                </div>
 
-                        // HTML出力エリア
-                        React.createElement('div', {
-                            key: 'output-area',
-                            className: "bg-white rounded-lg shadow-sm p-6"
-                        }, [
-                            React.createElement('div', {
-                                key: 'output-header',
-                                className: "flex items-center justify-between mb-4"
-                            }, [
-                                React.createElement('h2', {
-                                    key: 'output-title',
-                                    className: "text-xl font-semibold text-gray-700"
-                                }, '変換されたHTML'),
-                                html && React.createElement('button', {
-                                    key: 'copy-btn',
-                                    onClick: handleCopy,
-                                    className: "px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center gap-2"
-                                }, [
-                                    React.createElement('svg', {
-                                        key: 'copy-icon',
-                                        className: "w-4 h-4",
-                                        fill: "none",
-                                        stroke: "currentColor",
-                                        viewBox: "0 0 24 24"
-                                    },
-                                        React.createElement('path', {
-                                            strokeLinecap: "round",
-                                            strokeLinejoin: "round",
-                                            strokeWidth: 2,
-                                            d: "M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                                        })
-                                    ),
-                                    'コピー'
-                                ])
-                            ]),
-                            React.createElement('div', {
-                                key: 'output-container',
-                                className: "h-96 border border-gray-300 rounded-lg overflow-auto"
-                            },
-                                React.createElement('pre', {
-                                    key: 'output-pre',
-                                    className: "p-4 text-sm font-mono bg-gray-50 whitespace-pre-wrap break-words h-full"
-                                },
-                                    React.createElement('code', {
-                                        key: 'output-code'
-                                    }, html || '変換されたHTMLがここに表示されます')
-                                )
-                            ),
+                                {/* コピーメッセージ */}
+                                {copyMessage && (
+                                    <div className="mt-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg text-center">
+                                        {copyMessage}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
 
-                            // コピーメッセージ
-                            copyMessage && React.createElement('div', {
-                                key: 'copy-message',
-                                className: "mt-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg text-center"
-                            }, copyMessage)
-                        ])
-                    ]),
-
-                    // 使い方説明
-                    React.createElement('div', {
-                        key: 'help-section',
-                        className: "bg-white rounded-lg shadow-sm p-6 mt-8"
-                    }, [
-                        React.createElement('h2', {
-                            key: 'help-title',
-                            className: "text-xl font-semibold text-gray-700 mb-4"
-                        }, '使い方・Markdown記法例'),
-                        React.createElement('div', {
-                            key: 'help-content',
-                            className: "grid grid-cols-1 md:grid-cols-2 gap-6 text-sm"
-                        }, [
-                            React.createElement('div', {
-                                key: 'help-basic'
-                            }, [
-                                React.createElement('h3', {
-                                    key: 'basic-title',
-                                    className: "font-medium text-gray-800 mb-2"
-                                }, '基本記法'),
-                                React.createElement('ul', {
-                                    key: 'basic-list',
-                                    className: "space-y-1 text-gray-600"
-                                }, [
-                                    React.createElement('li', { key: 'b1' }, '**太字** または __太字__'),
-                                    React.createElement('li', { key: 'b2' }, '*斜体* または _斜体_'),
-                                    React.createElement('li', { key: 'b3' }, '`インラインコード`'),
-                                    React.createElement('li', { key: 'b4' }, '[リンク](URL)'),
-                                    React.createElement('li', { key: 'b5' }, '![画像](URL)')
-                                ])
-                            ]),
-                            React.createElement('div', {
-                                key: 'help-structure'
-                            }, [
-                                React.createElement('h3', {
-                                    key: 'structure-title',
-                                    className: "font-medium text-gray-800 mb-2"
-                                }, '構造要素'),
-                                React.createElement('ul', {
-                                    key: 'structure-list',
-                                    className: "space-y-1 text-gray-600"
-                                }, [
-                                    React.createElement('li', { key: 's1' }, '# 見出し1 ～ ###### 見出し6'),
-                                    React.createElement('li', { key: 's2' }, '- リスト項目'),
-                                    React.createElement('li', { key: 's3' }, '1. 番号付きリスト'),
-                                    React.createElement('li', { key: 's4' }, '> 引用'),
-                                    React.createElement('li', { key: 's5' }, '```言語名 でコードブロック')
-                                ])
-                            ])
-                        ])
-                    ])
-                ]),
-
-                // 関連ツール
-                React.createElement(RelatedTools, { key: 'related-tools', currentSlug: 'markdown-to-html' })
-            ]);
+                        {/* 使い方説明 */}
+                        <div className="bg-gray-50 rounded-lg p-6 mt-8">
+                            <h2 className="text-xl font-semibold text-gray-700 mb-4">使い方・Markdown記法例</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                                <div>
+                                    <h3 className="font-medium text-gray-800 mb-2">基本記法</h3>
+                                    <ul className="space-y-1 text-gray-600">
+                                        <li>**太字** または __太字__</li>
+                                        <li>*斜体* または _斜体_</li>
+                                        <li>`インラインコード`</li>
+                                        <li>[リンク](URL)</li>
+                                        <li>![画像](URL)</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h3 className="font-medium text-gray-800 mb-2">構造要素</h3>
+                                    <ul className="space-y-1 text-gray-600">
+                                        <li># 見出し1 ～ ###### 見出し6</li>
+                                        <li>- リスト項目</li>
+                                        <li>1. 番号付きリスト</li>
+                                        <li>> 引用</li>
+                                        <li>```言語名 でコードブロック</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+                        
+                        {/* サイドバー (デスクトップ) */}
+                        <div className="hidden lg:block w-80 bg-white rounded-lg shadow-lg p-6">
+                            <RelatedTools currentTool="markdown-to-html" variant="sidebar" />
+                        </div>
+                    </div>
+                    
+                    {/* 関連ツール (モバイル) */}
+                    <div className="lg:hidden mt-6">
+                        <div className="bg-white rounded-lg shadow-lg p-6">
+                            <RelatedTools currentTool="markdown-to-html" />
+                        </div>
+                    </div>
+                </div>
+            );
         };
 
         ReactDOM.render(React.createElement(MarkdownToHtmlConverter), document.getElementById('root'));

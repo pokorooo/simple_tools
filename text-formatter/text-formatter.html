@@ -20,7 +20,7 @@
     <script src="/related-tools-config.js"></script>
     <script src="/RelatedTools.js"></script>
 </head>
-<body>
+<body class="bg-gray-100 min-h-screen">
     <div id="root"></div>
     
     <script type="text/babel">
@@ -93,25 +93,19 @@
                 setOutputText('');
             };
 
-            return React.createElement('div', {
-                className: "min-h-screen bg-gradient-to-br from-green-50 to-blue-100"
-            }, [
-                // ヘッダー
-                React.createElement('header', {
-                    key: 'header',
-                    className: "bg-white shadow-sm"
-                }, 
-                    React.createElement('div', {
-                        className: "max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
-                    }, [
-                        React.createElement('div', {
+            return (
+                <div className="max-w-7xl mx-auto p-4 md:p-6">
+                    <div className="lg:flex lg:gap-6">
+                        {/* メインコンテンツ */}
+                        <div className="lg:flex-1 bg-white rounded-lg shadow-lg p-6 md:p-8">
+                        {React.createElement('div', {
                             key: 'nav',
                             className: "mb-4"
                         }, 
                             React.createElement('a', {
                                 key: 'back',
                                 href: '/',
-                                className: "inline-flex items-center text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                                className: "inline-flex items-center text-indigo-600 hover:text-indigo-700 transition-colors"
                             }, [
                                 React.createElement('svg', {
                                     key: 'arrow',
@@ -129,178 +123,124 @@
                                 ),
                                 'ツール一覧に戻る'
                             ])
-                        ),
-                        React.createElement('h1', {
-                            key: 'title',
-                            className: "text-3xl font-bold text-gray-900 text-center"
-                        }, [
-                            React.createElement('span', {
-                                key: 'icon',
-                                className: "mr-3"
-                            }, '📝'),
-                            'テキスト整形ツール'
-                        ]),
-                        React.createElement('p', {
-                            key: 'subtitle',
-                            className: "text-center text-gray-600 mt-2"
-                        }, 'テキストを様々な形式に整形・変換')
-                    ])
-                ),
+                        )}
+                        
+                        <h1 className="text-2xl md:text-3xl font-bold text-center mb-8 text-gray-800 bg-white py-4 px-6 rounded-lg">
+                            テキスト整形ツール
+                        </h1>
+                        {/* 入力セクション */}
+                        <div className="bg-gray-50 rounded-lg p-6 mb-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-xl font-semibold text-gray-700">入力</h2>
+                                <button
+                                    onClick={handleClear}
+                                    className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded hover:border-gray-400 transition-colors"
+                                >
+                                    クリア
+                                </button>
+                            </div>
+                            <textarea
+                                value={inputText}
+                                onChange={(e) => setInputText(e.target.value)}
+                                placeholder="ここにテキストを入力してください"
+                                className="w-full h-40 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                                spellCheck={false}
+                            />
+                        </div>
 
-                // メイン
-                React.createElement('main', {
-                    key: 'main',
-                    className: "max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
-                }, [
-                    // 入力セクション
-                    React.createElement('div', {
-                        key: 'input-section',
-                        className: "bg-white rounded-lg shadow-sm p-6 mb-6"
-                    }, [
-                        React.createElement('div', {
-                            key: 'input-header',
-                            className: "flex items-center justify-between mb-4"
-                        }, [
-                            React.createElement('h2', {
-                                key: 'input-title',
-                                className: "text-xl font-semibold text-gray-700"
-                            }, '入力'),
-                            React.createElement('button', {
-                                key: 'clear-btn',
-                                onClick: handleClear,
-                                className: "px-3 py-1 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded hover:border-gray-400 transition-colors"
-                            }, 'クリア')
-                        ]),
-                        React.createElement('textarea', {
-                            key: 'input-textarea',
-                            value: inputText,
-                            onChange: (e) => setInputText(e.target.value),
-                            placeholder: "ここにテキストを入力してください",
-                            className: "w-full h-40 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none",
-                            spellCheck: false
-                        })
-                    ]),
+                        {/* オプションセクション */}
+                        <div className="bg-gray-50 rounded-lg p-6 mb-6">
+                            <h2 className="text-xl font-semibold text-gray-700 mb-4">整形オプション</h2>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                                {/* 前後の空白を除去 */}
+                                <label className="flex items-center space-x-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={options.trim}
+                                        onChange={() => handleOptionChange('trim')}
+                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                    />
+                                    <span className="text-sm text-gray-700">前後の空白を除去</span>
+                                </label>
 
-                    // オプションセクション
-                    React.createElement('div', {
-                        key: 'options-section',
-                        className: "bg-white rounded-lg shadow-sm p-6 mb-6"
-                    }, [
-                        React.createElement('h2', {
-                            key: 'options-title',
-                            className: "text-xl font-semibold text-gray-700 mb-4"
-                        }, '整形オプション'),
-                        React.createElement('div', {
-                            key: 'options-grid',
-                            className: "grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6"
-                        }, [
-                            // 前後の空白を除去
-                            React.createElement('label', {
-                                key: 'trim-option',
-                                className: "flex items-center space-x-2 cursor-pointer"
-                            }, [
-                                React.createElement('input', {
-                                    key: 'trim-checkbox',
-                                    type: "checkbox",
-                                    checked: options.trim,
-                                    onChange: () => handleOptionChange('trim'),
-                                    className: "w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                }),
-                                React.createElement('span', {
-                                    key: 'trim-label',
-                                    className: "text-sm text-gray-700"
-                                }, '前後の空白を除去')
-                            ]),
+                                {/* 改行をカンマに変換 */}
+                                <label className="flex items-center space-x-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={options.lineToComma}
+                                        onChange={() => handleOptionChange('lineToComma')}
+                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                    />
+                                    <span className="text-sm text-gray-700">改行をカンマに変換</span>
+                                </label>
 
-                            // 改行をカンマに変換
-                            React.createElement('label', {
-                                key: 'comma-option',
-                                className: "flex items-center space-x-2 cursor-pointer"
-                            }, [
-                                React.createElement('input', {
-                                    key: 'comma-checkbox',
-                                    type: "checkbox",
-                                    checked: options.lineToComma,
-                                    onChange: () => handleOptionChange('lineToComma'),
-                                    className: "w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                }),
-                                React.createElement('span', {
-                                    key: 'comma-label',
-                                    className: "text-sm text-gray-700"
-                                }, '改行をカンマに変換')
-                            ]),
+                                {/* 重複行を削除 */}
+                                <label className="flex items-center space-x-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={options.removeDuplicates}
+                                        onChange={() => handleOptionChange('removeDuplicates')}
+                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                    />
+                                    <span className="text-sm text-gray-700">重複行を削除</span>
+                                </label>
+                            </div>
 
-                            // 重複行を削除
-                            React.createElement('label', {
-                                key: 'duplicate-option',
-                                className: "flex items-center space-x-2 cursor-pointer"
-                            }, [
-                                React.createElement('input', {
-                                    key: 'duplicate-checkbox',
-                                    type: "checkbox",
-                                    checked: options.removeDuplicates,
-                                    onChange: () => handleOptionChange('removeDuplicates'),
-                                    className: "w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                                }),
-                                React.createElement('span', {
-                                    key: 'duplicate-label',
-                                    className: "text-sm text-gray-700"
-                                }, '重複行を削除')
-                            ])
-                        ]),
+                            {/* 整形ボタン */}
+                            <div className="text-center">
+                                <button
+                                    onClick={formatText}
+                                    className="px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors duration-200"
+                                >
+                                    整形する
+                                </button>
+                            </div>
+                        </div>
 
-                        // 整形ボタン
-                        React.createElement('div', {
-                            key: 'format-button-container',
-                            className: "text-center"
-                        },
-                            React.createElement('button', {
-                                key: 'format-button',
-                                onClick: formatText,
-                                className: "px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors duration-200"
-                            }, '整形する')
-                        )
-                    ]),
+                        {/* 出力セクション */}
+                        <div className="bg-gray-50 rounded-lg p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-xl font-semibold text-gray-700">整形結果</h2>
+                                {outputText && (
+                                    <button
+                                        onClick={handleCopy}
+                                        className="px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors duration-200"
+                                    >
+                                        コピー
+                                    </button>
+                                )}
+                            </div>
+                            <textarea
+                                value={outputText}
+                                readOnly
+                                placeholder="整形されたテキストがここに表示されます"
+                                className="w-full h-40 p-4 border border-gray-300 rounded-lg bg-gray-50 resize-none"
+                                spellCheck={false}
+                            />
 
-                    // 出力セクション
-                    React.createElement('div', {
-                        key: 'output-section',
-                        className: "bg-white rounded-lg shadow-sm p-6"
-                    }, [
-                        React.createElement('div', {
-                            key: 'output-header',
-                            className: "flex items-center justify-between mb-4"
-                        }, [
-                            React.createElement('h2', {
-                                key: 'output-title',
-                                className: "text-xl font-semibold text-gray-700"
-                            }, '整形結果'),
-                            outputText && React.createElement('button', {
-                                key: 'copy-button',
-                                onClick: handleCopy,
-                                className: "px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors duration-200"
-                            }, 'コピー')
-                        ]),
-                        React.createElement('textarea', {
-                            key: 'output-textarea',
-                            value: outputText,
-                            readOnly: true,
-                            placeholder: "整形されたテキストがここに表示されます",
-                            className: "w-full h-40 p-4 border border-gray-300 rounded-lg bg-gray-50 resize-none",
-                            spellCheck: false
-                        }),
-
-                        // コピーメッセージ
-                        copyMessage && React.createElement('div', {
-                            key: 'copy-message',
-                            className: "mt-4 text-center text-green-600 text-sm font-medium"
-                        }, copyMessage)
-                    ])
-                ]),
-
-                // 関連ツール
-                React.createElement(RelatedTools, { key: 'related-tools', currentSlug: 'text-formatter' })
-            ]);
+                            {/* コピーメッセージ */}
+                            {copyMessage && (
+                                <div className="mt-4 text-center text-green-600 text-sm font-medium">
+                                    {copyMessage}
+                                </div>
+                            )}
+                        </div>
+                        </div>
+                        
+                        {/* サイドバー (デスクトップ) */}
+                        <div className="hidden lg:block w-80 bg-white rounded-lg shadow-lg p-6">
+                            <RelatedTools currentTool="text-formatter" variant="sidebar" />
+                        </div>
+                    </div>
+                    
+                    {/* 関連ツール (モバイル) */}
+                    <div className="lg:hidden mt-6">
+                        <div className="bg-white rounded-lg shadow-lg p-6">
+                            <RelatedTools currentTool="text-formatter" />
+                        </div>
+                    </div>
+                </div>
+            );
         };
 
         ReactDOM.render(React.createElement(TextFormatter), document.getElementById('root'));

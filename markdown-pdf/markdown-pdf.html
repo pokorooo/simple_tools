@@ -21,7 +21,6 @@
     <script src="https://unpkg.com/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: {
                 extend: {
                     typography: {
@@ -38,7 +37,7 @@
     <script src="/related-tools-config.js"></script>
     <script src="/RelatedTools.js"></script>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900">
+<body class="bg-gray-100 min-h-screen">
     <div id="root"></div>
     
     <script type="text/babel">
@@ -184,25 +183,19 @@ function hello() {
                 setMarkdown(sampleMarkdown);
             };
 
-            return React.createElement('div', {
-                className: "min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-900 dark:to-gray-800"
-            }, [
-                // ヘッダー
-                React.createElement('header', {
-                    key: 'header',
-                    className: "bg-white dark:bg-gray-800 shadow-sm"
-                }, 
-                    React.createElement('div', {
-                        className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
-                    }, [
-                        React.createElement('div', {
+            return (
+                <div className="max-w-7xl mx-auto p-4 md:p-6">
+                    <div className="lg:flex lg:gap-6">
+                        {/* メインコンテンツ */}
+                        <div className="lg:flex-1 bg-white rounded-lg shadow-lg p-6 md:p-8">
+                        {React.createElement('div', {
                             key: 'nav',
                             className: "mb-4"
                         }, 
                             React.createElement('a', {
                                 key: 'back',
                                 href: '/',
-                                className: "inline-flex items-center text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                                className: "inline-flex items-center text-indigo-600 hover:text-indigo-700 transition-colors"
                             }, [
                                 React.createElement('svg', {
                                     key: 'arrow',
@@ -220,147 +213,100 @@ function hello() {
                                 ),
                                 'ツール一覧に戻る'
                             ])
-                        ),
-                        React.createElement('h1', {
-                            key: 'title',
-                            className: "text-3xl font-bold text-gray-900 dark:text-white text-center"
-                        }, [
-                            React.createElement('span', {
-                                key: 'icon',
-                                className: "mr-3"
-                            }, '📄'),
-                            'Markdown → PDF コンバーター'
-                        ]),
-                        React.createElement('p', {
-                            key: 'subtitle',
-                            className: "text-center text-gray-600 dark:text-gray-300 mt-2"
-                        }, 'MarkdownをリアルタイムプレビューしてPDFに変換')
-                    ])
-                ),
+                        )}
+                        
+                        <h1 className="text-2xl md:text-3xl font-bold text-center mb-8 text-gray-800 bg-white py-4 px-6 rounded-lg">
+                            Markdown → PDF コンバーター
+                        </h1>
+                        {/* コントロールパネル */}
+                        <div className="bg-gray-50 rounded-lg p-6 mb-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                                {/* ページサイズ */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">ページサイズ</label>
+                                    <select
+                                        value={pageSize}
+                                        onChange={(e) => setPageSize(e.target.value)}
+                                        className="w-full p-2 border border-gray-300 rounded-lg bg-white text-gray-900"
+                                    >
+                                        <option value="a4">A4</option>
+                                        <option value="letter">Letter</option>
+                                    </select>
+                                </div>
 
-                // メイン
-                React.createElement('main', {
-                    key: 'main',
-                    className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
-                }, [
-                    // コントロールパネル
-                    React.createElement('div', {
-                        key: 'controls',
-                        className: "bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-8"
-                    }, [
-                        React.createElement('div', {
-                            key: 'controls-grid',
-                            className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end"
-                        }, [
-                            // ページサイズ
-                            React.createElement('div', {
-                                key: 'page-size'
-                            }, [
-                                React.createElement('label', {
-                                    key: 'size-label',
-                                    className: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                                }, 'ページサイズ'),
-                                React.createElement('select', {
-                                    key: 'size-select',
-                                    value: pageSize,
-                                    onChange: (e) => setPageSize(e.target.value),
-                                    className: "w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                }, [
-                                    React.createElement('option', { key: 'a4', value: 'a4' }, 'A4'),
-                                    React.createElement('option', { key: 'letter', value: 'letter' }, 'Letter')
-                                ])
-                            ]),
+                                {/* 方向 */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">方向</label>
+                                    <select
+                                        value={orientation}
+                                        onChange={(e) => setOrientation(e.target.value)}
+                                        className="w-full p-2 border border-gray-300 rounded-lg bg-white text-gray-900"
+                                    >
+                                        <option value="portrait">縦</option>
+                                        <option value="landscape">横</option>
+                                    </select>
+                                </div>
 
-                            // 方向
-                            React.createElement('div', {
-                                key: 'orientation'
-                            }, [
-                                React.createElement('label', {
-                                    key: 'orientation-label',
-                                    className: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                                }, '方向'),
-                                React.createElement('select', {
-                                    key: 'orientation-select',
-                                    value: orientation,
-                                    onChange: (e) => setOrientation(e.target.value),
-                                    className: "w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                }, [
-                                    React.createElement('option', { key: 'portrait', value: 'portrait' }, '縦'),
-                                    React.createElement('option', { key: 'landscape', value: 'landscape' }, '横')
-                                ])
-                            ]),
+                                {/* アクションボタン */}
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={handleLoadSample}
+                                        className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                                    >
+                                        サンプル
+                                    </button>
+                                    <button
+                                        onClick={handleClear}
+                                        className="px-4 py-2 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition-colors"
+                                    >
+                                        クリア
+                                    </button>
+                                </div>
 
-                            // アクションボタン
-                            React.createElement('div', {
-                                key: 'actions',
-                                className: "flex gap-2"
-                            }, [
-                                React.createElement('button', {
-                                    key: 'sample-btn',
-                                    onClick: handleLoadSample,
-                                    className: "px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors"
-                                }, 'サンプル'),
-                                React.createElement('button', {
-                                    key: 'clear-btn',
-                                    onClick: handleClear,
-                                    className: "px-4 py-2 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
-                                }, 'クリア')
-                            ]),
+                                {/* PDF生成ボタン */}
+                                <button
+                                    onClick={generatePDF}
+                                    disabled={!html || isGenerating}
+                                    className={`px-6 py-2 font-medium rounded-lg transition-colors ${
+                                        html && !isGenerating
+                                            ? 'bg-red-600 text-white hover:bg-red-700'
+                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    }`}
+                                >
+                                    {isGenerating ? 'Generating...' : 'Download PDF'}
+                                </button>
+                            </div>
+                        </div>
 
-                            // PDF生成ボタン
-                            React.createElement('button', {
-                                key: 'pdf-btn',
-                                onClick: generatePDF,
-                                disabled: !html || isGenerating,
-                                className: `px-6 py-2 font-medium rounded-lg transition-colors ${
-                                    html && !isGenerating
-                                        ? 'bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600'
-                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
-                                }`
-                            }, isGenerating ? 'Generating...' : 'Download PDF')
-                        ])
-                    ]),
+                        {/* エラー表示 */}
+                        {error && (
+                            <div className="mb-6 p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+                                {error}
+                            </div>
+                        )}
 
-                    // エラー表示
-                    error && React.createElement('div', {
-                        key: 'error',
-                        className: "mb-6 p-4 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 rounded-lg"
-                    }, error),
-
-                    // メインエリア
-                    React.createElement('div', {
-                        key: 'main-area',
-                        className: "grid grid-cols-1 lg:grid-cols-2 gap-8"
-                    }, [
-                        // 入力エリア
-                        React.createElement('div', {
-                            key: 'input-area',
-                            className: "bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
-                        }, [
-                            React.createElement('div', {
-                                key: 'input-header',
-                                className: "flex items-center justify-between mb-4"
-                            }, [
-                                React.createElement('h2', {
-                                    key: 'input-title',
-                                    className: "text-xl font-semibold text-gray-800 dark:text-white"
-                                }, 'Markdown 入力'),
-                                React.createElement('button', {
-                                    key: 'copy-btn',
-                                    onClick: handleCopy,
-                                    disabled: !markdown,
-                                    className: `px-4 py-2 font-medium rounded-lg transition-colors ${
-                                        markdown
-                                            ? 'bg-green-600 text-white hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600'
-                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
-                                    }`
-                                }, 'Copy Markdown')
-                            ]),
-                            React.createElement('textarea', {
-                                key: 'markdown-input',
-                                value: markdown,
-                                onChange: (e) => setMarkdown(e.target.value),
-                                placeholder: `# Hello World
+                        {/* メインエリア */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            {/* 入力エリア */}
+                            <div className="bg-gray-50 rounded-lg p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-xl font-semibold text-gray-800">Markdown 入力</h2>
+                                    <button
+                                        onClick={handleCopy}
+                                        disabled={!markdown}
+                                        className={`px-4 py-2 font-medium rounded-lg transition-colors ${
+                                            markdown
+                                                ? 'bg-green-600 text-white hover:bg-green-700'
+                                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        }`}
+                                    >
+                                        Copy Markdown
+                                    </button>
+                                </div>
+                                <textarea
+                                    value={markdown}
+                                    onChange={(e) => setMarkdown(e.target.value)}
+                                    placeholder={`# Hello World
 
 これはサンプルです。
 
@@ -372,95 +318,72 @@ function hello() {
 
 \`\`\`javascript
 console.log("Hello!");
-\`\`\``,
-                                className: "w-full h-96 p-4 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none font-mono text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white",
-                                spellCheck: false
-                            })
-                        ]),
+\`\`\``}
+                                    className="w-full h-96 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none font-mono text-sm bg-white text-gray-900"
+                                    spellCheck={false}
+                                />
+                            </div>
 
-                        // プレビューエリア
-                        React.createElement('div', {
-                            key: 'preview-area',
-                            className: "bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
-                        }, [
-                            React.createElement('h2', {
-                                key: 'preview-title',
-                                className: "text-xl font-semibold text-gray-800 dark:text-white mb-4"
-                            }, 'プレビュー / PDF'),
-                            React.createElement('div', {
-                                key: 'preview-container',
-                                className: "border border-gray-300 dark:border-gray-600 rounded-lg overflow-auto max-h-96"
-                            },
-                                React.createElement('div', {
-                                    key: 'preview-content',
-                                    ref: previewRef,
-                                    className: "p-6 prose dark:prose-invert prose-sm max-w-none",
-                                    dangerouslySetInnerHTML: { __html: html || '<p class="text-gray-500 dark:text-gray-400 italic">プレビューがここに表示されます</p>' }
-                                })
-                            )
-                        ])
-                    ]),
+                            {/* プレビューエリア */}
+                            <div className="bg-gray-50 rounded-lg p-6">
+                                <h2 className="text-xl font-semibold text-gray-800 mb-4">プレビュー / PDF</h2>
+                                <div className="border border-gray-300 rounded-lg overflow-auto max-h-96">
+                                    <div
+                                        ref={previewRef}
+                                        className="p-6 prose prose-sm max-w-none"
+                                        dangerouslySetInnerHTML={{ __html: html || '<p class="text-gray-500 italic">プレビューがここに表示されます</p>' }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
 
-                    // 使い方説明
-                    React.createElement('div', {
-                        key: 'help-section',
-                        className: "bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mt-8"
-                    }, [
-                        React.createElement('h2', {
-                            key: 'help-title',
-                            className: "text-xl font-semibold text-gray-800 dark:text-white mb-4"
-                        }, '使い方'),
-                        React.createElement('div', {
-                            key: 'help-content',
-                            className: "grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-600 dark:text-gray-300"
-                        }, [
-                            React.createElement('div', {
-                                key: 'help-basic'
-                            }, [
-                                React.createElement('h3', {
-                                    key: 'basic-title',
-                                    className: "font-medium text-gray-800 dark:text-white mb-2"
-                                }, '基本操作'),
-                                React.createElement('ul', {
-                                    key: 'basic-list',
-                                    className: "space-y-1"
-                                }, [
-                                    React.createElement('li', { key: 'b1' }, '左側にMarkdownを入力'),
-                                    React.createElement('li', { key: 'b2' }, '右側でリアルタイムプレビュー'),
-                                    React.createElement('li', { key: 'b3' }, 'ページ設定を調整'),
-                                    React.createElement('li', { key: 'b4' }, '「Download PDF」でPDF生成')
-                                ])
-                            ]),
-                            React.createElement('div', {
-                                key: 'help-markdown'
-                            }, [
-                                React.createElement('h3', {
-                                    key: 'markdown-title',
-                                    className: "font-medium text-gray-800 dark:text-white mb-2"
-                                }, 'Markdown記法'),
-                                React.createElement('ul', {
-                                    key: 'markdown-list',
-                                    className: "space-y-1"
-                                }, [
-                                    React.createElement('li', { key: 'm1' }, '# 見出し1 ～ ###### 見出し6'),
-                                    React.createElement('li', { key: 'm2' }, '**太字** *斜体* ~~取り消し~~'),
-                                    React.createElement('li', { key: 'm3' }, '- リスト 1. 番号付きリスト'),
-                                    React.createElement('li', { key: 'm4' }, '```コードブロック``` `インライン`')
-                                ])
-                            ])
-                        ])
-                    ])
-                ]),
+                        {/* 使い方説明 */}
+                        <div className="bg-gray-50 rounded-lg p-6 mt-8">
+                            <h2 className="text-xl font-semibold text-gray-800 mb-4">使い方</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-600">
+                                <div>
+                                    <h3 className="font-medium text-gray-800 mb-2">基本操作</h3>
+                                    <ul className="space-y-1">
+                                        <li>左側にMarkdownを入力</li>
+                                        <li>右側でリアルタイムプレビュー</li>
+                                        <li>ページ設定を調整</li>
+                                        <li>「Download PDF」でPDF生成</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h3 className="font-medium text-gray-800 mb-2">Markdown記法</h3>
+                                    <ul className="space-y-1">
+                                        <li># 見出し1 ～ ###### 見出し6</li>
+                                        <li>**太字** *斜体* ~~取り消し~~</li>
+                                        <li>- リスト 1. 番号付きリスト</li>
+                                        <li>```コードブロック``` `インライン`</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+                        
+                        {/* サイドバー (デスクトップ) */}
+                        <div className="hidden lg:block w-80 bg-white rounded-lg shadow-lg p-6">
+                            <RelatedTools currentTool="markdown-pdf" variant="sidebar" />
+                        </div>
+                    </div>
+                    
+                    {/* 関連ツール (モバイル) */}
+                    <div className="lg:hidden mt-6">
+                        <div className="bg-white rounded-lg shadow-lg p-6">
+                            <RelatedTools currentTool="markdown-pdf" />
+                        </div>
+                    </div>
 
-                // 関連ツール
-                React.createElement(RelatedTools, { key: 'related-tools', currentSlug: 'markdown-pdf' }),
-
-                // トーストメッセージ
-                copyMessage && React.createElement('div', {
-                    key: 'toast',
-                    className: "fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50"
-                }, copyMessage)
-            ]);
+                    {/* トーストメッセージ */}
+                    {copyMessage && (
+                        <div className="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50">
+                            {copyMessage}
+                        </div>
+                    )}
+                </div>
+            );
         };
 
         ReactDOM.render(React.createElement(MarkdownToPDF), document.getElementById('root'));

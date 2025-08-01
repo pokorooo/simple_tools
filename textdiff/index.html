@@ -265,7 +265,7 @@
 
                             React.createElement('button', {
                                 onClick: handleCompare,
-                                className: "w-full sm:w-auto bg-blue-600 text-white py-3 px-8 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-semibold text-lg"
+                                className: "w-full sm:w-auto bg-indigo-600 text-white py-3 px-8 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 font-semibold text-lg transition-colors"
                             }, '比較する')
                         ),
 
@@ -274,7 +274,7 @@
                         }, copyMessage),
 
                         diffResult.length > 0 && React.createElement('div', {
-                            className: "bg-gray-50 rounded-lg p-4"
+                            className: "bg-gray-50 rounded-lg p-6 mb-6"
                         },
                             React.createElement('div', {
                                 className: "flex justify-between items-center mb-4"
@@ -347,10 +347,23 @@
                                     )
                                 )
                             ),
+                    ),
+                    React.createElement('div', {
+                        className: "hidden lg:block w-80 bg-white rounded-lg shadow-lg p-6"
+                    },
+                        React.createElement(RelatedTools, { currentTool: 'textdiff', variant: 'sidebar' })
+                    )
+                ),
+                React.createElement('div', {
+                    className: "lg:hidden mt-6"
+                },
+                    React.createElement('div', {
+                        className: "bg-white rounded-lg shadow-lg p-6"
+                    },
                         React.createElement(RelatedTools, { currentTool: 'textdiff' })
-                        )
                     )
                 )
+            )
             );
         };
 

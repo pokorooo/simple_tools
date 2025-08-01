@@ -17,15 +17,10 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-        }
-    </script>
     <script src="/related-tools-config.js"></script>
     <script src="/RelatedTools.js"></script>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900">
+<body class="bg-gray-100 min-h-screen">
     <div id="root"></div>
     
     <script type="text/babel">
@@ -218,16 +213,18 @@
             };
 
             return React.createElement('div', {
-                className: "min-h-screen bg-gradient-to-br from-gray-50 to-blue-100 dark:from-gray-900 dark:to-gray-800"
+                className: "max-w-7xl mx-auto p-4 md:p-6"
             }, [
-                // ヘッダー
-                React.createElement('header', {
-                    key: 'header',
-                    className: "bg-white dark:bg-gray-800 shadow-sm"
-                }, 
+                React.createElement('div', {
+                    key: 'main-layout',
+                    className: "lg:flex lg:gap-6"
+                }, [
+                    // メインコンテンツ
                     React.createElement('div', {
-                        className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
+                        key: 'main-content',
+                        className: "lg:flex-1 bg-white rounded-lg shadow-lg p-6 md:p-8"
                     }, [
+                        // ナビゲーション
                         React.createElement('div', {
                             key: 'nav',
                             className: "mb-4"
@@ -235,7 +232,7 @@
                             React.createElement('a', {
                                 key: 'back',
                                 href: '/',
-                                className: "inline-flex items-center text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                                className: "inline-flex items-center text-indigo-600 hover:text-indigo-700 transition-colors"
                             }, [
                                 React.createElement('svg', {
                                     key: 'arrow',
@@ -254,9 +251,11 @@
                                 'ツール一覧に戻る'
                             ])
                         ),
+                        
+                        // タイトル
                         React.createElement('h1', {
                             key: 'title',
-                            className: "text-3xl font-bold text-gray-900 dark:text-white text-center"
+                            className: "text-2xl md:text-3xl font-bold text-center mb-8 text-gray-800"
                         }, [
                             React.createElement('span', {
                                 key: 'icon',
@@ -264,228 +263,245 @@
                             }, '🔍'),
                             'Hex Dump Viewer'
                         ]),
+                        
                         React.createElement('p', {
                             key: 'subtitle',
-                            className: "text-center text-gray-600 dark:text-gray-300 mt-2"
-                        }, 'バイナリファイルを16進ダンプ表示')
-                    ])
-                ),
+                            className: "text-center text-gray-600 mb-8"
+                        }, 'バイナリファイルを16進ダンプ表示'),
 
-                // メイン
-                React.createElement('main', {
-                    key: 'main',
-                    className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
-                }, [
-                    // メインエリア
-                    React.createElement('div', {
-                        key: 'main-area',
-                        className: "grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8"
-                    }, [
-                        // 入力エリア
+                        // メインエリア
                         React.createElement('div', {
-                            key: 'input-area',
-                            className: "bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
+                            key: 'main-area',
+                            className: "grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8"
                         }, [
-                            React.createElement('h2', {
-                                key: 'input-title',
-                                className: "text-xl font-semibold text-gray-800 dark:text-white mb-6"
-                            }, 'ファイル入力'),
-
-                            // ドラッグ＆ドロップ領域
+                            // 入力エリア
                             React.createElement('div', {
-                                key: 'drop-zone',
-                                onDragOver: handleDragOver,
-                                onDragLeave: handleDragLeave,
-                                onDrop: handleDrop,
-                                className: `border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                                    isDragOver 
-                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' 
-                                        : 'border-gray-300 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500'
-                                }`
+                                key: 'input-area',
+                                className: "bg-gray-50 rounded-lg p-6"
                             }, [
-                                React.createElement('svg', {
-                                    key: 'upload-icon',
-                                    className: "mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4",
-                                    stroke: "currentColor",
-                                    fill: "none",
-                                    viewBox: "0 0 48 48"
-                                },
-                                    React.createElement('path', {
-                                        d: "M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02",
-                                        strokeWidth: 2,
-                                        strokeLinecap: "round",
-                                        strokeLinejoin: "round"
+                                React.createElement('h2', {
+                                    key: 'input-title',
+                                    className: "text-xl font-semibold text-gray-800 mb-6"
+                                }, 'ファイル入力'),
+
+                                // ドラッグ＆ドロップ領域
+                                React.createElement('div', {
+                                    key: 'drop-zone',
+                                    onDragOver: handleDragOver,
+                                    onDragLeave: handleDragLeave,
+                                    onDrop: handleDrop,
+                                    className: `border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                                        isDragOver 
+                                            ? 'border-indigo-500 bg-indigo-50' 
+                                            : 'border-gray-300 hover:border-indigo-400'
+                                    }`
+                                }, [
+                                    React.createElement('svg', {
+                                        key: 'upload-icon',
+                                        className: "mx-auto h-12 w-12 text-gray-400 mb-4",
+                                        stroke: "currentColor",
+                                        fill: "none",
+                                        viewBox: "0 0 48 48"
+                                    },
+                                        React.createElement('path', {
+                                            d: "M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02",
+                                            strokeWidth: 2,
+                                            strokeLinecap: "round",
+                                            strokeLinejoin: "round"
+                                        })
+                                    ),
+                                    React.createElement('p', {
+                                        key: 'drop-text',
+                                        className: "text-gray-600 mb-2"
+                                    }, 'ファイルをドラッグ＆ドロップ'),
+                                    React.createElement('p', {
+                                        key: 'or-text',
+                                        className: "text-gray-500 text-sm mb-4"
+                                    }, 'または'),
+                                    React.createElement('button', {
+                                        key: 'file-button',
+                                        onClick: handleFileButtonClick,
+                                        className: "px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+                                    }, 'ファイルを選択'),
+                                    React.createElement('input', {
+                                        key: 'file-input',
+                                        ref: fileInputRef,
+                                        type: 'file',
+                                        onChange: handleFileSelect,
+                                        className: 'hidden'
                                     })
-                                ),
-                                React.createElement('p', {
-                                    key: 'drop-text',
-                                    className: "text-gray-600 dark:text-gray-300 mb-2"
-                                }, 'ファイルをドラッグ＆ドロップ'),
-                                React.createElement('p', {
-                                    key: 'or-text',
-                                    className: "text-gray-500 dark:text-gray-400 text-sm mb-4"
-                                }, 'または'),
-                                React.createElement('button', {
-                                    key: 'file-button',
-                                    onClick: handleFileButtonClick,
-                                    className: "px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 transition-colors"
-                                }, 'ファイルを選択'),
-                                React.createElement('input', {
-                                    key: 'file-input',
-                                    ref: fileInputRef,
-                                    type: 'file',
-                                    onChange: handleFileSelect,
-                                    className: 'hidden'
-                                })
+                                ]),
+
+                                // エラー表示
+                                error && React.createElement('div', {
+                                    key: 'error',
+                                    className: "mt-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm"
+                                }, error),
+
+                                // ファイル情報
+                                file && React.createElement('div', {
+                                    key: 'file-info',
+                                    className: "mt-4 p-4 bg-gray-100 rounded-lg"
+                                }, [
+                                    React.createElement('h3', {
+                                        key: 'info-title',
+                                        className: "font-medium text-gray-800 mb-2"
+                                    }, 'ファイル情報'),
+                                    React.createElement('p', {
+                                        key: 'file-name',
+                                        className: "text-sm text-gray-600"
+                                    }, `ファイル名: ${file.name}`),
+                                    React.createElement('p', {
+                                        key: 'file-size',
+                                        className: "text-sm text-gray-600"
+                                    }, `サイズ: ${(file.size / 1024).toFixed(2)} KB`)
+                                ]),
+
+                                // オプション
+                                arrayBuffer && React.createElement('div', {
+                                    key: 'options',
+                                    className: "mt-6 space-y-4"
+                                }, [
+                                    React.createElement('div', {
+                                        key: 'bytes-per-line'
+                                    }, [
+                                        React.createElement('label', {
+                                            key: 'bytes-label',
+                                            className: "block text-sm font-medium text-gray-700 mb-2"
+                                        }, '1行あたりのバイト数'),
+                                        React.createElement('select', {
+                                            key: 'bytes-select',
+                                            value: bytesPerLine,
+                                            onChange: (e) => setBytesPerLine(parseInt(e.target.value)),
+                                            className: "w-full p-2 border border-gray-300 rounded-lg bg-white text-gray-900"
+                                        }, [
+                                            React.createElement('option', { key: 8, value: 8 }, '8 バイト'),
+                                            React.createElement('option', { key: 16, value: 16 }, '16 バイト'),
+                                            React.createElement('option', { key: 32, value: 32 }, '32 バイト')
+                                        ])
+                                    ]),
+                                    React.createElement('div', {
+                                        key: 'offset-format'
+                                    }, [
+                                        React.createElement('label', {
+                                            key: 'offset-label',
+                                            className: "block text-sm font-medium text-gray-700 mb-2"
+                                        }, 'オフセット表示'),
+                                        React.createElement('select', {
+                                            key: 'offset-select',
+                                            value: offsetFormat,
+                                            onChange: (e) => setOffsetFormat(e.target.value),
+                                            className: "w-full p-2 border border-gray-300 rounded-lg bg-white text-gray-900"
+                                        }, [
+                                            React.createElement('option', { key: 'hex', value: 'hex' }, '16進数'),
+                                            React.createElement('option', { key: 'dec', value: 'dec' }, '10進数')
+                                        ])
+                                    ])
+                                ])
                             ]),
 
-                            // エラー表示
-                            error && React.createElement('div', {
-                                key: 'error',
-                                className: "mt-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 rounded-lg text-sm"
-                            }, error),
-
-                            // ファイル情報
-                            file && React.createElement('div', {
-                                key: 'file-info',
-                                className: "mt-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg"
-                            }, [
-                                React.createElement('h3', {
-                                    key: 'info-title',
-                                    className: "font-medium text-gray-800 dark:text-white mb-2"
-                                }, 'ファイル情報'),
-                                React.createElement('p', {
-                                    key: 'file-name',
-                                    className: "text-sm text-gray-600 dark:text-gray-300"
-                                }, `ファイル名: ${file.name}`),
-                                React.createElement('p', {
-                                    key: 'file-size',
-                                    className: "text-sm text-gray-600 dark:text-gray-300"
-                                }, `サイズ: ${(file.size / 1024).toFixed(2)} KB`)
-                            ]),
-
-                            // オプション
-                            arrayBuffer && React.createElement('div', {
-                                key: 'options',
-                                className: "mt-6 space-y-4"
+                            // ダンプ表示エリア
+                            React.createElement('div', {
+                                key: 'dump-area',
+                                className: "bg-gray-50 rounded-lg p-6"
                             }, [
                                 React.createElement('div', {
-                                    key: 'bytes-per-line'
+                                    key: 'dump-header',
+                                    className: "flex items-center justify-between mb-4"
                                 }, [
-                                    React.createElement('label', {
-                                        key: 'bytes-label',
-                                        className: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                                    }, '1行あたりのバイト数'),
-                                    React.createElement('select', {
-                                        key: 'bytes-select',
-                                        value: bytesPerLine,
-                                        onChange: (e) => setBytesPerLine(parseInt(e.target.value)),
-                                        className: "w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    React.createElement('h2', {
+                                        key: 'dump-title',
+                                        className: "text-xl font-semibold text-gray-800"
+                                    }, 'ヘックスダンプ'),
+                                    hexDump && React.createElement('div', {
+                                        key: 'action-buttons',
+                                        className: "flex gap-2"
                                     }, [
-                                        React.createElement('option', { key: 8, value: 8 }, '8 バイト'),
-                                        React.createElement('option', { key: 16, value: 16 }, '16 バイト'),
-                                        React.createElement('option', { key: 32, value: 32 }, '32 バイト')
+                                        React.createElement('button', {
+                                            key: 'copy-btn',
+                                            onClick: handleCopy,
+                                            className: "px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
+                                        }, 'コピー'),
+                                        React.createElement('button', {
+                                            key: 'download-btn',
+                                            onClick: handleDownload,
+                                            className: "px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                                        }, 'ダウンロード')
                                     ])
                                 ]),
                                 React.createElement('div', {
-                                    key: 'offset-format'
-                                }, [
-                                    React.createElement('label', {
-                                        key: 'offset-label',
-                                        className: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                                    }, 'オフセット表示'),
-                                    React.createElement('select', {
-                                        key: 'offset-select',
-                                        value: offsetFormat,
-                                        onChange: (e) => setOffsetFormat(e.target.value),
-                                        className: "w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                    }, [
-                                        React.createElement('option', { key: 'hex', value: 'hex' }, '16進数'),
-                                        React.createElement('option', { key: 'dec', value: 'dec' }, '10進数')
-                                    ])
-                                ])
+                                    key: 'dump-container',
+                                    className: "border border-gray-300 rounded-lg overflow-auto"
+                                },
+                                    React.createElement('pre', {
+                                        key: 'dump-content',
+                                        className: "p-4 font-mono text-sm text-gray-900 bg-gray-100 whitespace-pre overflow-auto max-h-96"
+                                    }, hexDump || 'ファイルを選択するとヘックスダンプが表示されます')
+                                )
                             ])
                         ]),
 
-                        // ダンプ表示エリア
-                        React.createElement('div', {
-                            key: 'dump-area',
-                            className: "bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
+                        // 履歴セクション
+                        history.length > 0 && React.createElement('div', {
+                            key: 'history-section',
+                            className: "mt-8 p-4 bg-gray-50 rounded-lg"
                         }, [
+                            React.createElement('h2', {
+                                key: 'history-title',
+                                className: "text-xl font-semibold text-gray-800 mb-4"
+                            }, '履歴（最新3件）'),
                             React.createElement('div', {
-                                key: 'dump-header',
-                                className: "flex items-center justify-between mb-4"
-                            }, [
-                                React.createElement('h2', {
-                                    key: 'dump-title',
-                                    className: "text-xl font-semibold text-gray-800 dark:text-white"
-                                }, 'ヘックスダンプ'),
-                                hexDump && React.createElement('div', {
-                                    key: 'action-buttons',
-                                    className: "flex gap-2"
-                                }, [
-                                    React.createElement('button', {
-                                        key: 'copy-btn',
-                                        onClick: handleCopy,
-                                        className: "px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 transition-colors"
-                                    }, 'コピー'),
-                                    React.createElement('button', {
-                                        key: 'download-btn',
-                                        onClick: handleDownload,
-                                        className: "px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors"
-                                    }, 'ダウンロード')
-                                ])
-                            ]),
-                            React.createElement('div', {
-                                key: 'dump-container',
-                                className: "border border-gray-300 dark:border-gray-600 rounded-lg overflow-auto"
+                                key: 'history-grid',
+                                className: "grid grid-cols-1 sm:grid-cols-3 gap-4"
                             },
-                                React.createElement('pre', {
-                                    key: 'dump-content',
-                                    className: "p-4 font-mono text-sm text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-900 whitespace-pre overflow-auto max-h-96"
-                                }, hexDump || 'ファイルを選択するとヘックスダンプが表示されます')
+                                history.map((item, index) =>
+                                    React.createElement('div', {
+                                        key: index,
+                                        className: "p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                                    }, [
+                                        React.createElement('div', {
+                                            key: 'hist-name',
+                                            className: "font-medium text-gray-900 mb-1 truncate"
+                                        }, item.name),
+                                        React.createElement('div', {
+                                            key: 'hist-size',
+                                            className: "text-sm text-gray-600 mb-2"
+                                        }, `${(item.size / 1024).toFixed(2)} KB`),
+                                        React.createElement('div', {
+                                            key: 'hist-time',
+                                            className: "text-xs text-gray-500"
+                                        }, new Date(item.timestamp).toLocaleString())
+                                    ])
+                                )
                             )
                         ])
                     ]),
 
-                    // 履歴セクション
-                    history.length > 0 && React.createElement('div', {
-                        key: 'history-section',
-                        className: "bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6"
-                    }, [
-                        React.createElement('h2', {
-                            key: 'history-title',
-                            className: "text-xl font-semibold text-gray-800 dark:text-white mb-4"
-                        }, '履歴（最新3件）'),
-                        React.createElement('div', {
-                            key: 'history-grid',
-                            className: "grid grid-cols-1 sm:grid-cols-3 gap-4"
-                        },
-                            history.map((item, index) =>
-                                React.createElement('div', {
-                                    key: index,
-                                    className: "p-4 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                                }, [
-                                    React.createElement('div', {
-                                        key: 'hist-name',
-                                        className: "font-medium text-gray-900 dark:text-white mb-1 truncate"
-                                    }, item.name),
-                                    React.createElement('div', {
-                                        key: 'hist-size',
-                                        className: "text-sm text-gray-600 dark:text-gray-400 mb-2"
-                                    }, `${(item.size / 1024).toFixed(2)} KB`),
-                                    React.createElement('div', {
-                                        key: 'hist-time',
-                                        className: "text-xs text-gray-500 dark:text-gray-400"
-                                    }, new Date(item.timestamp).toLocaleString())
-                                ])
-                            )
-                        )
-                    ]),
-
-                    // 関連ツール
-                    React.createElement(RelatedTools, { key: 'related-tools', currentSlug: 'hex-dump' })
+                    // サイドバー (デスクトップ)
+                    React.createElement('div', {
+                        key: 'desktop-sidebar',
+                        className: "hidden lg:block w-80 bg-white rounded-lg shadow-lg p-6"
+                    },
+                        React.createElement(RelatedTools, {
+                            currentTool: "hex-dump",
+                            variant: "sidebar"
+                        })
+                    )
                 ]),
+
+                // 関連ツール (モバイル)
+                React.createElement('div', {
+                    key: 'mobile-related',
+                    className: "lg:hidden mt-6"
+                }, 
+                    React.createElement('div', {
+                        className: "bg-white rounded-lg shadow-lg p-6"
+                    },
+                        React.createElement(RelatedTools, {
+                            currentTool: "hex-dump"
+                        })
+                    )
+                ),
 
                 // トーストメッセージ
                 copyMessage && React.createElement('div', {
