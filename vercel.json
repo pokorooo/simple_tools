@@ -54,7 +54,7 @@
     },
     {
       "source": "/image-resizer",
-      "destination": "/image-resizer/image-resizer.html"
+      "destination": "/image-resizer/index.html"
     },
     {
       "source": "/json",
