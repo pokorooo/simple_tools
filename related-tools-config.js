@@ -53,7 +53,7 @@ const RELATED_TOOLS_CONFIG = {
     'yamljson': { name: 'YAML ⇄ JSON 変換ツール', path: './yamljson/' },
     'json': { name: 'JSONフォーマッター', path: './json.html' },
     'base64': { name: 'Base64変換', path: './base64.html' },
-    'text-formatter': { name: 'テキスト整形', path: './text-formatter.html' },
+    'text-formatter': { name: 'テキスト整形', path: './text-formatter/' },
     'line-tab-converter': { name: '改行コード＆タブ変換', path: './line-tab-converter.html' },
     'markdown-to-html': { name: 'Markdown → HTML変換', path: './markdown-to-html.html' },
     'markdown-pdf': { name: 'Markdown → PDF コンバーター', path: './markdown-pdf.html' },
