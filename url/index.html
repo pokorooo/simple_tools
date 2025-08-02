@@ -13,8 +13,8 @@
 
       gtag('config', 'G-Q3F3DJ865S');
     </script>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/related-tools-config.js"></script>
@@ -56,25 +56,26 @@
                 }
             };
             
-            const handleInputChange = (e) => {
-                const value = e.target.value;
+            const handleInputChange = (value) => {
                 setInput(value);
                 setOutput(processText(value));
             };
             
-            const handleConvert = () => {
-                setOutput(processText(input));
-            };
-            
             const handleCopy = async () => {
+                if (!output) return;
+                
                 try {
                     await navigator.clipboard.writeText(output);
                     setCopyText('コピー済み');
-                    setTimeout(() => setCopyText('コピー'), 2000);
-                } catch (e) {
-                    setCopyText('エラー');
-                    setTimeout(() => setCopyText('コピー'), 2000);
+                    setTimeout(() => setCopyText('コピー'), 1500);
+                } catch (err) {
+                    console.error('コピーに失敗しました:', err);
                 }
+            };
+            
+            const handleClear = () => {
+                setInput('');
+                setOutput('');
             };
             
             const handleTabChange = (tab) => {
@@ -87,130 +88,139 @@
                     <div className="lg:flex lg:gap-6">
                         {/* Main Content */}
                         <div className="lg:flex-1 bg-white rounded-lg shadow-lg p-6 md:p-8">
-                    <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
-                        {React.createElement('div', {
-                            key: 'nav',
-                            className: "mb-4"
-                        }, 
-                            React.createElement('a', {
-                                key: 'back',
-                                href: '/',
-                                className: "inline-flex items-center text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
-                            }, [
-                                React.createElement('svg', {
-                                    key: 'arrow',
-                                    className: "w-5 h-5 mr-2",
-                                    fill: "none",
-                                    stroke: "currentColor",
-                                    viewBox: "0 0 24 24"
-                                },
-                                    React.createElement('path', {
-                                        strokeLinecap: "round",
-                                        strokeLinejoin: "round",
-                                        strokeWidth: 2,
-                                        d: "M15 19l-7-7 7-7"
-                                    })
-                                ),
-                                'ツール一覧に戻る'
-                            ])
-                        )}
-                        
-                        <h1 className="text-2xl md:text-3xl font-bold text-center mb-8 text-gray-800 bg-white py-4 px-6 rounded-lg">
-                            URL エンコード・デコード ツール
-                        </h1>
-                        
-                        {/* タブ */}
-                        <div className="flex mb-6 border-b border-gray-200">
-                            <button
-                                onClick={() => handleTabChange('encode')}
-                                className={`flex-1 px-4 py-2 text-center font-medium transition-colors ${
-                                    activeTab === 'encode'
-                                        ? 'text-blue-600 border-b-2 border-blue-600'
-                                        : 'text-gray-600 hover:text-gray-800'
-                                }`}
-                            >
-                                URL エンコード
-                            </button>
-                            <button
-                                onClick={() => handleTabChange('decode')}
-                                className={`flex-1 px-4 py-2 text-center font-medium transition-colors ${
-                                    activeTab === 'decode'
-                                        ? 'text-blue-600 border-b-2 border-blue-600'
-                                        : 'text-gray-600 hover:text-gray-800'
-                                }`}
-                            >
-                                URL デコード
-                            </button>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {/* 入力エリア */}
-                            <div className="space-y-2">
-                                <label htmlFor="input" className="block text-sm font-medium text-gray-700">
-                                    入力
-                                </label>
-                                <textarea
-                                    id="input"
-                                    value={input}
-                                    onChange={handleInputChange}
-                                    placeholder={`${activeTab === 'encode' ? 'エンコード' : 'デコード'}したい文字列を入力してください`}
-                                    className="w-full h-32 md:h-40 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                                />
-                                <button
-                                    onClick={handleConvert}
-                                    className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+                            {/* ナビゲーション */}
+                            <div className="mb-4">
+                                <a
+                                    href="/"
+                                    className="inline-flex items-center text-indigo-600 hover:text-indigo-700 transition-colors"
                                 >
-                                    {activeTab === 'encode' ? 'エンコード' : 'デコード'}
+                                    <svg
+                                        className="w-5 h-5 mr-2"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M15 19l-7-7 7-7"
+                                        />
+                                    </svg>
+                                    ツール一覧に戻る
+                                </a>
+                            </div>
+                            
+                            <h1 className="text-2xl md:text-3xl font-bold text-center mb-8 text-gray-800 bg-white py-4 px-6 rounded-lg">
+                                URL エンコード・デコード ツール
+                            </h1>
+                            
+                            {/* タブ */}
+                            <div className="flex mb-6 border-b border-gray-200">
+                                <button
+                                    onClick={() => handleTabChange('encode')}
+                                    className={`flex-1 px-4 py-2 text-center font-medium transition-colors ${
+                                        activeTab === 'encode'
+                                            ? 'text-blue-600 border-b-2 border-blue-600'
+                                            : 'text-gray-600 hover:text-gray-800'
+                                    }`}
+                                >
+                                    エンコード
+                                </button>
+                                <button
+                                    onClick={() => handleTabChange('decode')}
+                                    className={`flex-1 px-4 py-2 text-center font-medium transition-colors ${
+                                        activeTab === 'decode'
+                                            ? 'text-blue-600 border-b-2 border-blue-600'
+                                            : 'text-gray-600 hover:text-gray-800'
+                                    }`}
+                                >
+                                    デコード
                                 </button>
                             </div>
                             
-                            {/* 出力エリア */}
-                            <div className="space-y-2">
-                                <label htmlFor="output" className="block text-sm font-medium text-gray-700">
-                                    結果
-                                </label>
-                                <div className="relative">
-                                    <textarea
-                                        id="output"
-                                        value={output}
-                                        readOnly
-                                        className="w-full h-32 md:h-40 px-3 py-2 border border-gray-300 rounded-md bg-gray-50 resize-none"
-                                        placeholder="結果がここに表示されます"
-                                    />
+                            {/* 入力エリア */}
+                            <div className="mb-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-lg font-semibold text-gray-700">
+                                        {activeTab === 'encode' ? '元のテキスト' : 'エンコードされたテキスト'}
+                                    </h2>
                                     <button
-                                        onClick={handleCopy}
-                                        disabled={!output}
-                                        className={`absolute bottom-2 right-2 px-3 py-1 text-sm rounded transition-colors ${
-                                            output 
-                                                ? 'bg-green-600 text-white hover:bg-green-700' 
-                                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                        }`}
+                                        onClick={handleClear}
+                                        className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded hover:border-gray-400 transition-colors"
                                     >
-                                        {copyText}
+                                        クリア
                                     </button>
+                                </div>
+                                <textarea
+                                    value={input}
+                                    onChange={(e) => handleInputChange(e.target.value)}
+                                    placeholder={
+                                        activeTab === 'encode' 
+                                            ? 'エンコードしたいテキストを入力してください...'
+                                            : 'デコードしたいURLエンコードされたテキストを入力してください...'
+                                    }
+                                    className="w-full h-32 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                                    spellCheck={false}
+                                />
+                            </div>
+                            
+                            {/* 出力エリア */}
+                            <div className="mb-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-lg font-semibold text-gray-700">
+                                        {activeTab === 'encode' ? 'エンコード結果' : 'デコード結果'}
+                                    </h2>
+                                    {output && (
+                                        <button
+                                            onClick={handleCopy}
+                                            className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                                        >
+                                            {copyText}
+                                        </button>
+                                    )}
+                                </div>
+                                <textarea
+                                    value={output}
+                                    readOnly
+                                    placeholder={
+                                        activeTab === 'encode' 
+                                            ? 'エンコード結果がここに表示されます...'
+                                            : 'デコード結果がここに表示されます...'
+                                    }
+                                    className="w-full h-32 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 resize-none"
+                                    spellCheck={false}
+                                />
+                            </div>
+                            
+                            {/* 説明 */}
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <h3 className="font-semibold text-blue-800 mb-2">使い方</h3>
+                                <div className="text-sm text-blue-700 space-y-1">
+                                    {activeTab === 'encode' ? (
+                                        <>
+                                            <p>• 日本語や特殊文字を含むテキストをURL安全な形式に変換します</p>
+                                            <p>• スペースは %20 に、日本語は %E3%81%82 のような形式になります</p>
+                                            <p>• URLのクエリパラメータやフォームデータの送信に使用されます</p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <p>• URLエンコードされたテキストを元の読める形式に戻します</p>
+                                            <p>• %20 はスペースに、%E3%81%82 は「あ」のような文字に変換されます</p>
+                                            <p>• URLから取得したパラメータの値を読みやすくするのに便利です</p>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </div>
-                        
-                        {/* 説明 */}
-                        <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-                            <h2 className="text-lg font-semibold mb-2 text-gray-800">使い方</h2>
-                            <ul className="text-sm text-gray-600 space-y-1">
-                                <li>• 上部のタブで「URL エンコード」または「URL デコード」を選択</li>
-                                <li>• 入力欄に文字列を入力すると、リアルタイムで変換されます</li>
-                                <li>• 「{activeTab === 'encode' ? 'エンコード' : 'デコード'}」ボタンをクリックして手動変換も可能</li>
-                                <li>• 結果欄の「コピー」ボタンで変換結果をクリップボードにコピーできます</li>
-                            </ul>
-                        </div>
-                        </div>
-                        
-                        {/* Desktop Sidebar */}
+
+                        {/* サイドバー (デスクトップ) */}
                         <div className="hidden lg:block w-80 bg-white rounded-lg shadow-lg p-6">
                             <RelatedTools currentTool="url" variant="sidebar" />
                         </div>
                     </div>
-                    
-                    {/* Mobile Related Tools */}
+
+                    {/* 関連ツール (モバイル) */}
                     <div className="lg:hidden mt-6">
                         <div className="bg-white rounded-lg shadow-lg p-6">
                             <RelatedTools currentTool="url" />
