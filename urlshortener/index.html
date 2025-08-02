@@ -25,7 +25,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useRef } = React;
 
         const UrlShortener = () => {
             const [url, setUrl] = useState('');
@@ -35,6 +35,7 @@
             const [error, setError] = useState('');
             const [copyMessage, setCopyMessage] = useState('');
             const [history, setHistory] = useState([]);
+            const qrCodeRef = useRef(null);
 
             useEffect(() => {
                 const savedHistory = localStorage.getItem('urlShortenerHistory');
@@ -43,6 +44,14 @@
                 }
             }, []);
 
+            useEffect(() => {
+                if (shortUrl && qrCodeRef.current) {
+                    QRCode.toCanvas(qrCodeRef.current, shortUrl, { width: 128 }, (error) => {
+                        if (error) console.error('QRコード生成エラー:', error);
+                    });
+                }
+            }, [shortUrl]);
+
             const isValidUrl = (value) => {
                 try {
                     new URL(value);
@@ -50,6 +59,19 @@
                 } catch {
                     return false;
                 }
+            };
+
+            const addToHistory = (originalUrl, shortUrl, service) => {
+                const historyItem = {
+                    originalUrl,
+                    shortUrl,
+                    service,
+                    timestamp: Date.now()
+                };
+                
+                const newHistory = [historyItem, ...history.filter(h => h.shortUrl !== shortUrl)].slice(0, 5);
+                setHistory(newHistory);
+                localStorage.setItem('urlShortenerHistory', JSON.stringify(newHistory));
             };
 
             const shortenUrl = async () => {
@@ -68,54 +90,66 @@
                 setShortUrl('');
 
                 try {
-                    const encodedUrl = encodeURIComponent(url);
-                    let apiUrl = '';
-
-                    if (selectedService === 'tinyurl') {
-                        apiUrl = `https://tinyurl.com/api-create.php?url=${encodedUrl}`;
-                    } else if (selectedService === 'isgd') {
-                        apiUrl = `https://is.gd/create.php?format=simple&url=${encodedUrl}`;
-                    }
-
-                    const response = await fetch(apiUrl);
-                    
-                    if (!response.ok) {
-                        throw new Error('短縮URLの生成に失敗しました');
-                    }
-
-                    const result = await response.text();
-                    
-                    if (result.includes('Error') || result.includes('error')) {
-                        throw new Error('短縮URLの生成に失敗しました');
-                    }
-
-                    setShortUrl(result.trim());
-
-                    const historyItem = {
-                        originalUrl: url,
-                        shortUrl: result.trim(),
-                        service: selectedService,
-                        timestamp: Date.now()
+                    let apiUrl;
+                    let body;
+                    let headers = {
+                        'Content-Type': 'application/json',
                     };
 
-                    const newHistory = [historyItem, ...history.slice(0, 4)];
-                    setHistory(newHistory);
-                    localStorage.setItem('urlShortenerHistory', JSON.stringify(newHistory));
+                    if (selectedService === 'tinyurl') {
+                        apiUrl = 'https://api.tinyurl.com/create';
+                        body = JSON.stringify({
+                            url: url.trim(),
+                            domain: 'tinyurl.com'
+                        });
+                        headers['Authorization'] = 'Bearer YOUR_TINYURL_TOKEN';
+                    } else if (selectedService === 'isgd') {
+                        apiUrl = `https://is.gd/create.php?format=simple&url=${encodeURIComponent(url.trim())}`;
+                    }
 
-                } catch (err) {
-                    setError(err instanceof Error ? err.message : '短縮URLの生成に失敗しました');
+                    let response;
+                    if (selectedService === 'tinyurl') {
+                        response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers,
+                            body
+                        });
+                    } else {
+                        response = await fetch(apiUrl);
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    let result;
+                    if (selectedService === 'tinyurl') {
+                        const data = await response.json();
+                        result = data.data.tiny_url;
+                    } else {
+                        result = await response.text();
+                        if (result.includes('Error')) {
+                            throw new Error(result);
+                        }
+                    }
+
+                    setShortUrl(result);
+                    addToHistory(url.trim(), result, selectedService);
+                } catch (error) {
+                    console.error('URL短縮エラー:', error);
+                    setError('URL短縮に失敗しました。後でもう一度お試しください。');
                 } finally {
                     setIsLoading(false);
                 }
             };
 
-            const copyToClipboard = async (textToCopy) => {
+            const copyToClipboard = async (text) => {
                 try {
-                    await navigator.clipboard.writeText(textToCopy);
+                    await navigator.clipboard.writeText(text);
                     setCopyMessage('コピーしました');
-                    setTimeout(() => setCopyMessage(''), 2000);
-                } catch (err) {
-                    setError('コピーに失敗しました');
+                    setTimeout(() => setCopyMessage(''), 1500);
+                } catch (error) {
+                    console.error('コピーに失敗しました:', error);
                 }
             };
 
@@ -123,170 +157,166 @@
                 copyToClipboard(item.shortUrl);
             };
 
-            return React.createElement('div', {
-                className: "min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8"
-            }, 
-                React.createElement('div', {
-                    className: "max-w-2xl mx-auto"
-                },
-                    React.createElement('div', {
-                        key: 'nav',
-                        className: "mb-4"
-                    }, 
-                        React.createElement('a', {
-                            key: 'back',
-                            href: '/',
-                            className: "inline-flex items-center text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
-                        }, [
-                            React.createElement('svg', {
-                                key: 'arrow',
-                                className: "w-5 h-5 mr-2",
-                                fill: "none",
-                                stroke: "currentColor",
-                                viewBox: "0 0 24 24"
-                            },
-                                React.createElement('path', {
-                                    strokeLinecap: "round",
-                                    strokeLinejoin: "round",
-                                    strokeWidth: 2,
-                                    d: "M15 19l-7-7 7-7"
-                                })
-                            ),
-                            'ツール一覧に戻る'
-                        ])
-                    ),
-                    React.createElement('div', {
-                        className: "bg-white rounded-lg shadow-md p-6"
-                    },
-                        React.createElement('h1', {
-                            className: "text-3xl font-bold text-gray-900 text-center mb-8"
-                        }, 'URL短縮ツール'),
+            return (
+                <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="lg:flex lg:gap-6">
+                            {/* メインコンテンツ */}
+                            <div className="lg:flex-1 bg-white rounded-lg shadow-md p-6">
+                                {/* ナビゲーション */}
+                                <div className="mb-4">
+                                    <a
+                                        href="/"
+                                        className="inline-flex items-center text-indigo-600 hover:text-indigo-700 transition-colors"
+                                    >
+                                        <svg
+                                            className="w-5 h-5 mr-2"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M15 19l-7-7 7-7"
+                                            />
+                                        </svg>
+                                        ツール一覧に戻る
+                                    </a>
+                                </div>
 
-                        React.createElement('div', {
-                            className: "space-y-6"
-                        },
-                            React.createElement('div', {},
-                                React.createElement('label', {
-                                    htmlFor: "service",
-                                    className: "block text-sm font-medium text-gray-700 mb-2"
-                                }, '短縮サービス'),
-                                React.createElement('select', {
-                                    id: "service",
-                                    value: selectedService,
-                                    onChange: (e) => setSelectedService(e.target.value),
-                                    className: "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                },
-                                    React.createElement('option', { value: "tinyurl" }, 'TinyURL'),
-                                    React.createElement('option', { value: "isgd" }, 'is.gd')
-                                )
-                            ),
+                                <h1 className="text-3xl font-bold text-gray-900 text-center mb-8">
+                                    URL短縮ツール
+                                </h1>
 
-                            React.createElement('div', {},
-                                React.createElement('label', {
-                                    htmlFor: "url",
-                                    className: "block text-sm font-medium text-gray-700 mb-2"
-                                }, 'URL'),
-                                React.createElement('input', {
-                                    id: "url",
-                                    type: "url",
-                                    value: url,
-                                    onChange: (e) => setUrl(e.target.value),
-                                    placeholder: "ここにURLを入力してください",
-                                    className: "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                })
-                            ),
+                                <div className="space-y-6">
+                                    <div>
+                                        <label htmlFor="service" className="block text-sm font-medium text-gray-700 mb-2">
+                                            短縮サービス
+                                        </label>
+                                        <select
+                                            id="service"
+                                            value={selectedService}
+                                            onChange={(e) => setSelectedService(e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        >
+                                            <option value="tinyurl">TinyURL</option>
+                                            <option value="isgd">is.gd</option>
+                                        </select>
+                                    </div>
 
-                            React.createElement('button', {
-                                onClick: shortenUrl,
-                                disabled: isLoading,
-                                className: "w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                            }, isLoading ? '生成中...' : '短縮する'),
+                                    <div>
+                                        <label htmlFor="url" className="block text-sm font-medium text-gray-700 mb-2">
+                                            URL
+                                        </label>
+                                        <input
+                                            id="url"
+                                            type="url"
+                                            value={url}
+                                            onChange={(e) => setUrl(e.target.value)}
+                                            placeholder="ここにURLを入力してください"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                    </div>
 
-                            error && React.createElement('div', {
-                                className: "text-red-600 text-sm text-center"
-                            }, error),
+                                    <button
+                                        onClick={shortenUrl}
+                                        disabled={isLoading}
+                                        className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {isLoading ? '生成中...' : '短縮する'}
+                                    </button>
 
-                            copyMessage && React.createElement('div', {
-                                className: "bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded text-center"
-                            }, copyMessage),
+                                    {error && (
+                                        <div className="text-red-600 text-sm text-center">
+                                            {error}
+                                        </div>
+                                    )}
 
-                            shortUrl && React.createElement('div', {
-                                className: "bg-gray-50 rounded-lg p-4 space-y-4"
-                            },
-                                React.createElement('div', {},
-                                    React.createElement('label', {
-                                        className: "block text-sm font-medium text-gray-700 mb-2"
-                                    }, '短縮URL'),
-                                    React.createElement('div', {
-                                        className: "flex gap-2"
-                                    },
-                                        React.createElement('input', {
-                                            type: "text",
-                                            value: shortUrl,
-                                            readOnly: true,
-                                            className: "flex-1 px-3 py-2 border border-gray-300 rounded-md bg-white"
-                                        }),
-                                        React.createElement('button', {
-                                            onClick: () => copyToClipboard(shortUrl),
-                                            className: "bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                                        }, 'コピー')
-                                    )
-                                ),
+                                    {copyMessage && (
+                                        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded text-center">
+                                            {copyMessage}
+                                        </div>
+                                    )}
 
-                                React.createElement('div', {
-                                    className: "flex justify-center"
-                                },
-                                    React.createElement('div', {
-                                        className: "bg-white p-4 rounded-lg border"
-                                    },
-                                        React.createElement('canvas', {
-                                            ref: (canvas) => {
-                                                if (canvas && window.QRCode) {
-                                                    QRCode.toCanvas(canvas, shortUrl, { width: 128 }, (error) => {
-                                                        if (error) console.error(error);
-                                                    });
-                                                }
-                                            }
-                                        })
-                                    )
-                                )
-                            ),
+                                    {shortUrl && (
+                                        <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    短縮URL
+                                                </label>
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="text"
+                                                        value={shortUrl}
+                                                        readOnly
+                                                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-white"
+                                                    />
+                                                    <button
+                                                        onClick={() => copyToClipboard(shortUrl)}
+                                                        className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                                                    >
+                                                        コピー
+                                                    </button>
+                                                </div>
+                                            </div>
 
-                            history.length > 0 && React.createElement('div', {},
-                                React.createElement('h2', {
-                                    className: "text-lg font-semibold text-gray-900 mb-3"
-                                }, '履歴（最新5件）'),
-                                React.createElement('div', {
-                                    className: "space-y-2"
-                                },
-                                    history.map((item, index) =>
-                                        React.createElement('div', {
-                                            key: index,
-                                            onClick: () => handleHistoryClick(item),
-                                            className: "bg-gray-50 p-3 rounded-md cursor-pointer hover:bg-gray-100 transition-colors"
-                                        },
-                                            React.createElement('div', {
-                                                className: "text-sm text-gray-600 mb-1"
-                                            }, `${item.service === 'tinyurl' ? 'TinyURL' : 'is.gd'} - ${new Date(item.timestamp).toLocaleString()}`),
-                                            React.createElement('div', {
-                                                className: "text-sm text-gray-800 truncate"
-                                            }, item.originalUrl),
-                                            React.createElement('div', {
-                                                className: "text-sm text-blue-600 font-medium"
-                                            }, item.shortUrl)
-                                        )
-                                    )
-                                )
-                            ),
-                        React.createElement(RelatedTools, { currentTool: 'urlshortener' })
-                        )
-                    )
-                )
+                                            <div className="flex justify-center">
+                                                <div className="bg-white p-4 rounded-lg border">
+                                                    <canvas ref={qrCodeRef}></canvas>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {history.length > 0 && (
+                                        <div>
+                                            <h2 className="text-lg font-semibold text-gray-900 mb-3">
+                                                履歴（最新5件）
+                                            </h2>
+                                            <div className="space-y-2">
+                                                {history.map((item, index) => (
+                                                    <div
+                                                        key={index}
+                                                        onClick={() => handleHistoryClick(item)}
+                                                        className="bg-gray-50 p-3 rounded-md cursor-pointer hover:bg-gray-100 transition-colors"
+                                                    >
+                                                        <div className="text-sm text-gray-600 mb-1">
+                                                            {item.service === 'tinyurl' ? 'TinyURL' : 'is.gd'} - {new Date(item.timestamp).toLocaleString()}
+                                                        </div>
+                                                        <div className="text-sm text-gray-800 truncate">
+                                                            {item.originalUrl}
+                                                        </div>
+                                                        <div className="text-sm text-blue-600 font-medium">
+                                                            {item.shortUrl}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* サイドバー (デスクトップ) */}
+                            <div className="hidden lg:block w-80 bg-white rounded-lg shadow-lg p-6">
+                                <RelatedTools currentTool="urlshortener" variant="sidebar" />
+                            </div>
+                        </div>
+
+                        {/* 関連ツール (モバイル) */}
+                        <div className="lg:hidden mt-6">
+                            <div className="bg-white rounded-lg shadow-lg p-6">
+                                <RelatedTools currentTool="urlshortener" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
             );
         };
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(React.createElement(UrlShortener));
+        ReactDOM.render(<UrlShortener />, document.getElementById('root'));
     </script>
 </body>
 </html>
