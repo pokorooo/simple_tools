@@ -5,6 +5,10 @@
   "outputDirectory": ".",
   "rewrites": [
     {
+      "source": "/",
+      "destination": "/index.html"
+    },
+    {
       "source": "/base-converter",
       "destination": "/base-converter/base-converter.html"
     },
