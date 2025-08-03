@@ -5,9 +5,18 @@
   "main": "index.html",
   "scripts": {
     "start": "vercel dev",
-    "build": "echo 'No build step needed for static site'"
+    "build": "babel . --out-dir build --extensions \".js,.jsx\" --source-maps inline --copy-files --ignore \"node_modules\""
   },
-  "keywords": ["tools", "utilities", "web", "pokoro"],
+  "keywords": [
+    "tools",
+    "utilities",
+    "web",
+    "pokoro"
+  ],
   "author": "Pokoro",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/cli": "^7.28.0",
+    "@babel/preset-react": "^7.27.1"
+  }
 }
