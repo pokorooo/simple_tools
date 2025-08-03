@@ -18,8 +18,6 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
-    <script src="/related-tools-config.js"></script>
-    <script src="/RelatedTools.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
     <div id="root"></div>
@@ -47,6 +45,19 @@ contact:
             const [jsonError, setJsonError] = useState('');
             const [history, setHistory] = useState([]);
             const [toastVisible, setToastVisible] = useState(false);
+            const [expandedCategories, setExpandedCategories] = useState({
+                dataConversion: true,
+                devTools: false,
+                textTools: false
+            });
+            
+            // カテゴリの開閉切り替え
+            const toggleCategory = (category) => {
+                setExpandedCategories(prev => ({
+                    ...prev,
+                    [category]: !prev[category]
+                }));
+            };
             
             const yamlFileRef = useRef(null);
             const jsonFileRef = useRef(null);
@@ -418,7 +429,25 @@ contact:
                         </div>
                     )}
 
-                    <RelatedTools currentTool="yamljson" />
+                    {/* 関連ツール */}
+                    <div className="bg-white rounded-lg shadow-lg p-6 mt-6">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-3">🔗 関連ツール</h3>
+                        <p className="text-sm text-gray-600 mb-4">データ変換・開発の便利なツール</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <a href="/base64/" className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded transition-colors">
+                                🔐 Base64変換
+                            </a>
+                            <a href="/url/" className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded transition-colors">
+                                🔗 URLエンコード
+                            </a>
+                            <a href="/csvjson/" className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded transition-colors">
+                                🔄 CSV ⇄ JSON
+                            </a>
+                            <a href="/regex/" className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded transition-colors">
+                                🔍 正規表現テスター
+                            </a>
+                        </div>
+                    </div>
                 </div>
             );
         };
