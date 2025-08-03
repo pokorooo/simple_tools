@@ -35,7 +35,20 @@
             const [error, setError] = useState('');
             const [copyMessage, setCopyMessage] = useState('');
             const [history, setHistory] = useState([]);
+            const [expandedCategories, setExpandedCategories] = useState({
+                calculatorTools: false,
+                dataConversion: true,
+                devTools: false
+            });
             const fileInputRef = useRef(null);
+            
+            // カテゴリの開閉切り替え
+            const toggleCategory = (category) => {
+                setExpandedCategories(prev => ({
+                    ...prev,
+                    [category]: !prev[category]
+                }));
+            };
 
             const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -481,12 +494,239 @@
                     React.createElement('div', {
                         key: 'desktop-sidebar',
                         className: "hidden lg:block w-80 bg-white rounded-lg shadow-lg p-6"
-                    },
-                        React.createElement(RelatedTools, {
-                            currentTool: "hex-dump",
-                            variant: "sidebar"
-                        })
-                    )
+                    }, [
+                        React.createElement('div', {
+                            key: 'sidebar-header',
+                            className: "mb-6"
+                        }, [
+                            React.createElement('h2', {
+                                key: 'sidebar-title',
+                                className: "text-xl font-bold text-gray-800 flex items-center"
+                            }, [
+                                '🔗 関連ツール'
+                            ]),
+                            React.createElement('p', {
+                                key: 'sidebar-desc',
+                                className: "text-sm text-gray-600 mt-1"
+                            }, 'カテゴリ別に整理されたツール一覧')
+                        ]),
+                        React.createElement('div', {
+                            key: 'sidebar-content',
+                            className: "space-y-6"
+                        }, [
+                            // 計算・変換ツール
+                            React.createElement('div', {
+                                key: 'calculator-tools',
+                                className: "bg-gray-50 rounded-lg p-4"
+                            }, [
+                                React.createElement('button', {
+                                    key: 'calculator-toggle',
+                                    onClick: () => toggleCategory('calculatorTools'),
+                                    className: "w-full flex items-center justify-between text-lg font-semibold text-gray-800 hover:text-indigo-600 transition-colors"
+                                }, [
+                                    React.createElement('span', {
+                                        key: 'calculator-label'
+                                    }, '🔢 計算・変換'),
+                                    React.createElement('svg', {
+                                        key: 'calculator-arrow',
+                                        className: `w-5 h-5 transform transition-transform ${expandedCategories.calculatorTools ? 'rotate-180' : ''}`,
+                                        fill: "none",
+                                        stroke: "currentColor",
+                                        viewBox: "0 0 24 24"
+                                    },
+                                        React.createElement('path', {
+                                            strokeLinecap: "round",
+                                            strokeLinejoin: "round",
+                                            strokeWidth: 2,
+                                            d: "M19 9l-7 7-7-7"
+                                        })
+                                    )
+                                ]),
+                                expandedCategories.calculatorTools && React.createElement('div', {
+                                    key: 'calculator-links',
+                                    className: "mt-3 space-y-2"
+                                }, [
+                                    React.createElement('a', {
+                                        key: 'bitwise-calc',
+                                        href: "/bitwise-calculator/",
+                                        className: "block px-3 py-2 text-sm text-gray-700 hover:bg-white rounded transition-colors"
+                                    }, '⚡ ビット演算計算機'),
+                                    React.createElement('a', {
+                                        key: 'base-converter',
+                                        href: "/base-converter/",
+                                        className: "block px-3 py-2 text-sm text-gray-700 hover:bg-white rounded transition-colors"
+                                    }, '🔢 進数変換'),
+                                    React.createElement('a', {
+                                        key: 'bytebit',
+                                        href: "/bytebit/",
+                                        className: "block px-3 py-2 text-sm text-gray-700 hover:bg-white rounded transition-colors"
+                                    }, '💾 バイト・ビット計算')
+                                ])
+                            ]),
+
+                            // データ変換ツール
+                            React.createElement('div', {
+                                key: 'data-conversion',
+                                className: "bg-gray-50 rounded-lg p-4"
+                            }, [
+                                React.createElement('button', {
+                                    key: 'data-toggle',
+                                    onClick: () => toggleCategory('dataConversion'),
+                                    className: "w-full flex items-center justify-between text-lg font-semibold text-gray-800 hover:text-indigo-600 transition-colors"
+                                }, [
+                                    React.createElement('span', {
+                                        key: 'data-label'
+                                    }, '🔄 データ変換'),
+                                    React.createElement('svg', {
+                                        key: 'data-arrow',
+                                        className: `w-5 h-5 transform transition-transform ${expandedCategories.dataConversion ? 'rotate-180' : ''}`,
+                                        fill: "none",
+                                        stroke: "currentColor",
+                                        viewBox: "0 0 24 24"
+                                    },
+                                        React.createElement('path', {
+                                            strokeLinecap: "round",
+                                            strokeLinejoin: "round",
+                                            strokeWidth: 2,
+                                            d: "M19 9l-7 7-7-7"
+                                        })
+                                    )
+                                ]),
+                                expandedCategories.dataConversion && React.createElement('div', {
+                                    key: 'data-links',
+                                    className: "mt-3 space-y-2"
+                                }, [
+                                    React.createElement('a', {
+                                        key: 'base64',
+                                        href: "/base64/",
+                                        className: "block px-3 py-2 text-sm text-gray-700 hover:bg-white rounded transition-colors"
+                                    }, '🔐 Base64変換'),
+                                    React.createElement('a', {
+                                        key: 'url-encode',
+                                        href: "/url/",
+                                        className: "block px-3 py-2 text-sm text-gray-700 hover:bg-white rounded transition-colors"
+                                    }, '🔗 URLエンコード'),
+                                    React.createElement('a', {
+                                        key: 'utf8-sjis',
+                                        href: "/utf8-sjis/",
+                                        className: "block px-3 py-2 text-sm text-gray-700 hover:bg-white rounded transition-colors"
+                                    }, '🔤 UTF-8 ⇄ Shift_JIS')
+                                ])
+                            ]),
+
+                            // 開発ツール
+                            React.createElement('div', {
+                                key: 'dev-tools',
+                                className: "bg-gray-50 rounded-lg p-4"
+                            }, [
+                                React.createElement('button', {
+                                    key: 'dev-toggle',
+                                    onClick: () => toggleCategory('devTools'),
+                                    className: "w-full flex items-center justify-between text-lg font-semibold text-gray-800 hover:text-indigo-600 transition-colors"
+                                }, [
+                                    React.createElement('span', {
+                                        key: 'dev-label'
+                                    }, '🛠️ 開発ツール'),
+                                    React.createElement('svg', {
+                                        key: 'dev-arrow',
+                                        className: `w-5 h-5 transform transition-transform ${expandedCategories.devTools ? 'rotate-180' : ''}`,
+                                        fill: "none",
+                                        stroke: "currentColor",
+                                        viewBox: "0 0 24 24"
+                                    },
+                                        React.createElement('path', {
+                                            strokeLinecap: "round",
+                                            strokeLinejoin: "round",
+                                            strokeWidth: 2,
+                                            d: "M19 9l-7 7-7-7"
+                                        })
+                                    )
+                                ]),
+                                expandedCategories.devTools && React.createElement('div', {
+                                    key: 'dev-links',
+                                    className: "mt-3 space-y-2"
+                                }, [
+                                    React.createElement('a', {
+                                        key: 'regex',
+                                        href: "/regex/",
+                                        className: "block px-3 py-2 text-sm text-gray-700 hover:bg-white rounded transition-colors"
+                                    }, '🔍 正規表現テスター'),
+                                    React.createElement('a', {
+                                        key: 'json',
+                                        href: "/json/",
+                                        className: "block px-3 py-2 text-sm text-gray-700 hover:bg-white rounded transition-colors"
+                                    }, '📋 JSONフォーマッター'),
+                                    React.createElement('a', {
+                                        key: 'cron',
+                                        href: "/cron/",
+                                        className: "block px-3 py-2 text-sm text-gray-700 hover:bg-white rounded transition-colors"
+                                    }, '⏰ Cron式パーサー')
+                                ])
+                            ]),
+
+                            // 使い方のヒント
+                            React.createElement('div', {
+                                key: 'usage-hints',
+                                className: "bg-blue-50 rounded-lg p-4"
+                            }, [
+                                React.createElement('h3', {
+                                    key: 'hints-title',
+                                    className: "text-lg font-semibold text-blue-800 mb-3"
+                                }, '💡 使い方のヒント'),
+                                React.createElement('ul', {
+                                    key: 'hints-list',
+                                    className: "text-sm text-blue-700 space-y-1"
+                                }, [
+                                    React.createElement('li', { key: 'hint1' }, '• バイナリファイルの構造解析に'),
+                                    React.createElement('li', { key: 'hint2' }, '• ファイル形式の確認・デバッグに'),
+                                    React.createElement('li', { key: 'hint3' }, '• データ破損の調査に'),
+                                    React.createElement('li', { key: 'hint4' }, '• リバースエンジニアリングに')
+                                ])
+                            ]),
+
+                            // 技術ブログ
+                            React.createElement('div', {
+                                key: 'tech-blog',
+                                className: "bg-indigo-50 rounded-lg p-4"
+                            }, [
+                                React.createElement('h3', {
+                                    key: 'blog-title',
+                                    className: "text-lg font-semibold text-indigo-800 mb-3"
+                                }, '📝 技術ブログ'),
+                                React.createElement('a', {
+                                    key: 'blog-link',
+                                    href: "https://pokoroblog.com/",
+                                    target: "_blank",
+                                    rel: "noopener noreferrer",
+                                    className: "flex items-center px-3 py-2 text-sm text-indigo-700 hover:bg-indigo-100 rounded transition-colors"
+                                }, [
+                                    React.createElement('span', {
+                                        key: 'blog-icon',
+                                        className: "mr-2"
+                                    }, '🌐'),
+                                    'Pokoro Blog',
+                                    React.createElement('svg', {
+                                        key: 'external-link',
+                                        className: "w-3 h-3 ml-1",
+                                        fill: "none",
+                                        stroke: "currentColor",
+                                        viewBox: "0 0 24 24"
+                                    },
+                                        React.createElement('path', {
+                                            strokeLinecap: "round",
+                                            strokeLinejoin: "round",
+                                            strokeWidth: 2,
+                                            d: "M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                        })
+                                    )
+                                ]),
+                                React.createElement('p', {
+                                    key: 'blog-desc',
+                                    className: "text-xs text-indigo-600 mt-2"
+                                }, 'プログラミング・技術情報を発信中')
+                            ])
+                        ])
+                    ])
                 ]),
 
                 // 関連ツール (モバイル)
@@ -496,11 +736,41 @@
                 }, 
                     React.createElement('div', {
                         className: "bg-white rounded-lg shadow-lg p-6"
-                    },
-                        React.createElement(RelatedTools, {
-                            currentTool: "hex-dump"
-                        })
-                    )
+                    }, [
+                        React.createElement('h3', {
+                            key: 'mobile-title',
+                            className: "text-lg font-semibold text-gray-800 mb-3"
+                        }, '🔗 関連ツール'),
+                        React.createElement('p', {
+                            key: 'mobile-desc',
+                            className: "text-sm text-gray-600 mb-4"
+                        }, 'データ変換・開発の便利なツール'),
+                        React.createElement('div', {
+                            key: 'mobile-grid',
+                            className: "grid grid-cols-1 sm:grid-cols-2 gap-3"
+                        }, [
+                            React.createElement('a', {
+                                key: 'mobile-base64',
+                                href: "/base64/",
+                                className: "block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded transition-colors"
+                            }, '🔐 Base64変換'),
+                            React.createElement('a', {
+                                key: 'mobile-base-converter',
+                                href: "/base-converter/",
+                                className: "block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded transition-colors"
+                            }, '🔢 進数変換'),
+                            React.createElement('a', {
+                                key: 'mobile-utf8-sjis',
+                                href: "/utf8-sjis/",
+                                className: "block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded transition-colors"
+                            }, '🔤 UTF-8 ⇄ Shift_JIS'),
+                            React.createElement('a', {
+                                key: 'mobile-regex',
+                                href: "/regex/",
+                                className: "block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded transition-colors"
+                            }, '🔍 正規表現テスター')
+                        ])
+                    ])
                 ),
 
                 // トーストメッセージ
