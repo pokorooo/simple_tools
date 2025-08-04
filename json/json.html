@@ -17,8 +17,6 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="/related-tools-config.js"></script>
-    <script src="/RelatedTools.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
     <div id="root"></div>
@@ -235,7 +233,7 @@
                       }, '🛠️ 開発ツール'),
                       React.createElement('svg', {
                         key: 'dev-arrow',
-                        className: `w-5 h-5 transform transition-transform ${expandedCategories.devTools ? 'rotate-180' : ''}`,
+                        className: "w-5 h-5 transform transition-transform " + (expandedCategories.devTools ? 'rotate-180' : ''),
                         fill: "none",
                         stroke: "currentColor",
                         viewBox: "0 0 24 24"
@@ -290,7 +288,7 @@
                       }, '🔄 データ変換'),
                       React.createElement('svg', {
                         key: 'data-arrow',
-                        className: `w-5 h-5 transform transition-transform ${expandedCategories.dataConversion ? 'rotate-180' : ''}`,
+                        className: "w-5 h-5 transform transition-transform " + (expandedCategories.dataConversion ? 'rotate-180' : ''),
                         fill: "none",
                         stroke: "currentColor",
                         viewBox: "0 0 24 24"
@@ -345,7 +343,7 @@
                       }, '📝 テキスト操作'),
                       React.createElement('svg', {
                         key: 'text-arrow',
-                        className: `w-5 h-5 transform transition-transform ${expandedCategories.textTools ? 'rotate-180' : ''}`,
+                        className: "w-5 h-5 transform transition-transform " + (expandedCategories.textTools ? 'rotate-180' : ''),
                         fill: "none",
                         stroke: "currentColor",
                         viewBox: "0 0 24 24"
